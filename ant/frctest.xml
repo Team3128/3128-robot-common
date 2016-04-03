@@ -1,0 +1,157 @@
+<project name="frc-test">
+    
+     <!-- 
+       _______   _____     _______
+  	  |  _____| |  _  \   |  _____|
+      | |____   | |_| |   | |
+      | _____|  |  _  \   | |                       
+      | |       | |  \ \  | |_____   |   _   _  |  
+      |_|       |_|   \_| |_______| —|— |_| |_ —|— 
+                                     |  |_   _| |  
+           
+       _                               
+      | |      _         _           __      |
+     —|—  |-,  _| ,-,-, |_| \  ^  / |  | |-, |/
+      |   |   |_| | | | |_   \/ \/  |__| |   |\
+      
+    -->
+  
+  	<property name="frctest-folder" value="frctest"/>
+	<property name="lib-folder" value="${frctest-folder}/lib"/>
+	<property name="native-lib-folder" location="${frctest-folder}/lib/native"/>
+
+	<property name="test-project" value="../frc-java-tests"/>  
+	
+	<property name="test-build.dir" value="${frctest-folder}/build"/>
+	<property name="emulator-build.dir" value="${frctest-folder}/unittest-build"/>
+  	<property name="robot-code-jar" value="${frctest-folder}/Robot Code.jar"/>
+	
+	<!-- assume that the test code is in the same workspace and cloned under the correct name  -->
+	<property name="test-src.dir" value="${test-project}/src"/>  
+	
+	<property name="javassist-jar" value="${lib-folder}/javassist.jar"/>
+	<property name="guava-jar" value="${lib-folder}/guava-18.0.jar"/>
+	<property name="reflections-jar" value="${lib-folder}/reflections-0.9.9-RC1.jar"/>
+	<property name="frctest-jar" value="${lib-folder}/FRC-Test.jar"/>
+	<property name="junit.jar" value="${lib-folder}/junit.jar"/>
+	<property name="ant-junit.jar" value="${lib-folder}/ant-junit.jar"/>
+	<property name="hamcrest.jar" value="${lib-folder}/hamcrest-core-1.3.jar"/>
+	<property name="javajoystick.jar" value="${lib-folder}/JavaJoystick.jar"/>
+
+	<property name="emulatorclasspath" value="${javassist-jar}:${guava-jar}:${reflections-jar}:${frctest-jar}:${javajoystick.jar}"/>
+	
+	<!-- all of the jars needed to run test mode -->
+	<property name="testclasspath" value="${emulatorclasspath}:${robot-code-jar}:${junit.jar}:${ant-junit.jar}:${hamcrest.jar}:${javajoystick.jar}"/>
+	
+	
+	<target name="test" depends="testcompile">
+		<junit fork="yes">
+		  <batchtest>
+		    <fileset dir="${test-build.dir}" >
+		    	<include name="**/*Test*.class"/>
+		    </fileset>
+		  </batchtest>
+		  <classpath>
+		    <pathelement path="${testclasspath}"/>
+		    <pathelement location="${test-build.dir}"/>
+		    	
+		  	<!-- include resources -->
+		    <pathelement location="${test-project}/src"/>
+		  </classpath>
+		  <sysproperty key="java.library.path" value="${native-lib-folder}"/>
+		  <formatter type="plain" usefile="false" /> <!-- to screen -->
+		  <!--formatter type="xml"/-->
+		</junit>
+		
+		<mkdir dir="junit"/>
+		
+		<!-- junitreport todir="junit">
+		 <fileset dir=".">
+			 <include name="TEST-*.xml" />
+		 </fileset>
+		 <report todir="junit" />
+	 	</junitreport-->
+	</target>
+	
+	<target name="testdebug" depends="testcompile">
+		<junit fork="yes">
+		  <batchtest>
+		    <fileset dir="${test-build.dir}" >
+		    	<include name="**/*Test*.class"/>
+		    </fileset>
+		  </batchtest>
+		  <classpath>
+		    <pathelement path="${testclasspath}"/>
+		    <pathelement location="${test-build.dir}"/>
+		    	
+		  	<!-- include resources -->
+		    <pathelement location="${test-project}/src"/>
+		  </classpath>
+		  <sysproperty key="java.library.path" value="${native-lib-folder}"/>
+		  <formatter type="plain" usefile="false" /> <!-- to screen -->
+			
+  		  <jvmarg value="-Xdebug" />
+  		  <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5432" />
+		</junit>		
+	</target>
+	
+	<target name="runemulator" depends="emulatorjar" description="Run the robot emulator.">
+		<java fork="true" classname="frctest.EmulatorMain">
+		  <classpath>
+		    <pathelement path="${emulatorclasspath}"/>
+		    <pathelement location="${robot-code-jar}"/>
+		  </classpath>
+		  <sysproperty key="java.library.path" value="${native-lib-folder}"/>
+		</java>
+	</target>
+	
+	<target name="emulatorjar" depends="emulatorcompile">
+		<jar destfile="${robot-code-jar}" update="true">
+		  <fileset dir="${emulator-build.dir}" includes="**/*.class"/>
+		</jar>
+	</target>
+	
+	<target name="testcompile" depends="emulatorjar" description="Compile the test code.">
+		<mkdir dir="${test-build.dir}"/>
+		<echo level="info">[FRC-Test] Compiling ${test-src.dir} to ${test-build.dir} using java ${ant.java.version}</echo>
+		
+		<javac srcdir="${test-src.dir}"
+		 destdir="${test-build.dir}"
+		 includeAntRuntime="no"
+		 includeJavaRuntime="no"
+		 classpath="${testclasspath}"
+		 target="${ant.java.version}"
+		 source="${ant.java.version}"
+		 compiler="javac${ant.java.version}"
+		 debug="true">
+		</javac>
+	</target>
+	
+	<target name="emulatorcompile" description="Compile the source code using the emulator jar.">
+		<mkdir dir="${emulator-build.dir}"/>
+		<echo level="info">[FRC-Test] Compiling /${src.dir} to /${emulatorbuild.dir} using java ${ant.java.version}</echo>
+		<echo level="info">[FRC-Test] Classpath: ${emulatorclasspath}</echo>
+		
+
+		<!-- check javac version, since the Eclipse-included Ant seems to sometimes use an older one-->
+		<if>
+		  	<equals arg1="${ant.java.version}" arg2="1.8"/>
+			<then>
+	  		</then>
+		  	<else>
+				<echo>[FRC-Test] Ant is using an older java version (${ant.java.version}), if the compile fails that's probably why!</echo>
+		  	</else>
+		</if>
+		
+		<javac srcdir="${src.dir}"
+		 destdir="${emulator-build.dir}"
+		 includeAntRuntime="no"
+		 includeJavaRuntime="no"
+		 classpath="${emulatorclasspath}"
+		 target="${ant.java.version}"
+		 source="${ant.java.version}"
+		 compiler="javac${ant.java.version}"
+		 debug="true">
+		</javac>
+	</target>
+</project>
