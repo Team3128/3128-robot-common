@@ -60,7 +60,7 @@
   <target name="compile" description="Compile the source code.">
     <mkdir dir="${build.dir}"/>
 	<property name="userLibs" value=""/>
-    <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-code-src.dir} with classpath=${classpath}:${userLibs} to ${build.dir}</echo>
+    <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} with classpath=${classpath}:${userLibs} to ${build.dir}</echo>
 
     <javac srcdir="${common-src.dir}"
      destdir="${build.dir}"
@@ -103,17 +103,17 @@
   </copy>
 
     <jar destfile="${dist.jar}" update="false">
-      <manifest>
-    	<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
-    	<attribute name="Robot-Class" value="${robot.class}"/>
-    	<attribute name="Class-Path" value="."/>
-      </manifest>
+		<manifest>
+			<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
+			<attribute name="Robot-Class" value="${robot.class}"/>
+			<attribute name="Class-Path" value="."/>
+		</manifest>
+		
+		<fileset dir="${build.dir}" includes="**/*.class"/>
 
-      <fileset dir="${build.dir}" includes="**/*.class"/>
-
-    <zipgroupfileset dir="${build.jars}">
-      <include name="**/*.jar" />
-    </zipgroupfileset>
+		<zipgroupfileset dir="${build.jars}">
+		  <include name="**/*.jar" />
+		</zipgroupfileset>
     </jar>
   </target>
 

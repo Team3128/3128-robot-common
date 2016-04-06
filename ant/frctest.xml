@@ -16,15 +16,15 @@
       
     -->
   
-  	<property name="frctest-folder" value="frctest"/>
+  	<property name="frctest-folder" value="${common-library}/frctest"/>
 	<property name="lib-folder" value="${frctest-folder}/lib"/>
 	<property name="native-lib-folder" location="${frctest-folder}/lib/native"/>
 
 	<property name="test-project" value="../frc-java-tests"/>  
 	
-	<property name="test-build.dir" value="${frctest-folder}/build"/>
-	<property name="emulator-build.dir" value="${frctest-folder}/unittest-build"/>
-  	<property name="robot-code-jar" value="${frctest-folder}/Robot Code.jar"/>
+	<property name="test-build.dir" value="${build.dir}/frctest-test"/>
+	<property name="emulator-build.dir" value="${build.dir}/frctest-emu"/>
+  	<property name="robot-code-jar" value="${dist.dir}/frctest/Robot Code.jar"/>
 	
 	<!-- assume that the test code is in the same workspace and cloned under the correct name  -->
 	<property name="test-src.dir" value="${test-project}/src"/>  
@@ -38,13 +38,13 @@
 	<property name="hamcrest.jar" value="${lib-folder}/hamcrest-core-1.3.jar"/>
 	<property name="javajoystick.jar" value="${lib-folder}/JavaJoystick.jar"/>
 
-	<property name="emulatorclasspath" value="${javassist-jar}:${guava-jar}:${reflections-jar}:${frctest-jar}:${javajoystick.jar}"/>
+	<property name="emulatorclasspath" value="${javassist-jar}:${guava-jar}:${reflections-jar}:${frctest-jar}:${javajoystick.jar}:${networktables.jar}"/>
 	
 	<!-- all of the jars needed to run test mode -->
 	<property name="testclasspath" value="${emulatorclasspath}:${robot-code-jar}:${junit.jar}:${ant-junit.jar}:${hamcrest.jar}:${javajoystick.jar}"/>
 	
 	
-	<target name="test" depends="testcompile">
+	<target name="unittest" depends="unittest-compile">
 		<junit fork="yes">
 		  <batchtest>
 		    <fileset dir="${test-build.dir}" >
@@ -73,7 +73,7 @@
 	 	</junitreport-->
 	</target>
 	
-	<target name="testdebug" depends="testcompile">
+	<target name="unittest-debug" depends="unittest-compile">
 		<junit fork="yes">
 		  <batchtest>
 		    <fileset dir="${test-build.dir}" >
@@ -95,7 +95,7 @@
 		</junit>		
 	</target>
 	
-	<target name="runemulator" depends="emulatorjar" description="Run the robot emulator.">
+	<target name="runemulator" depends="frctest-emulator-jar" description="Run the robot emulator.">
 		<java fork="true" classname="frctest.EmulatorMain">
 		  <classpath>
 		    <pathelement path="${emulatorclasspath}"/>
@@ -105,13 +105,13 @@
 		</java>
 	</target>
 	
-	<target name="emulatorjar" depends="emulatorcompile">
+	<target name="frctest-emulator-jar" depends="frctest-compile">
 		<jar destfile="${robot-code-jar}" update="true">
 		  <fileset dir="${emulator-build.dir}" includes="**/*.class"/>
 		</jar>
 	</target>
 	
-	<target name="testcompile" depends="emulatorjar" description="Compile the test code.">
+	<target name="unittest-compile" depends="frctest-emulator-jar" description="Compile the test code.">
 		<mkdir dir="${test-build.dir}"/>
 		<echo level="info">[FRC-Test] Compiling ${test-src.dir} to ${test-build.dir} using java ${ant.java.version}</echo>
 		
@@ -127,31 +127,47 @@
 		</javac>
 	</target>
 	
-	<target name="emulatorcompile" description="Compile the source code using the emulator jar.">
+	<target name="frctest-compile" description="Compile the source code using the frctest jar.">
 		<mkdir dir="${emulator-build.dir}"/>
-		<echo level="info">[FRC-Test] Compiling /${src.dir} to /${emulatorbuild.dir} using java ${ant.java.version}</echo>
+	    <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} using ${ant.java.version}</echo>
 		<echo level="info">[FRC-Test] Classpath: ${emulatorclasspath}</echo>
 		
 
 		<!-- check javac version, since the Eclipse-included Ant seems to sometimes use an older one-->
 		<if>
-		  	<equals arg1="${ant.java.version}" arg2="1.8"/>
-			<then>
-	  		</then>
-		  	<else>
+			<not>
+		  		<equals arg1="${ant.java.version}" arg2="1.8"/>
+			</not>
+		  	<then>
 				<echo>[FRC-Test] Ant is using an older java version (${ant.java.version}), if the compile fails that's probably why!</echo>
-		  	</else>
+		  	</then>
 		</if>
 		
-		<javac srcdir="${src.dir}"
-		 destdir="${emulator-build.dir}"
-		 includeAntRuntime="no"
-		 includeJavaRuntime="no"
-		 classpath="${emulatorclasspath}"
-		 target="${ant.java.version}"
-		 source="${ant.java.version}"
-		 compiler="javac${ant.java.version}"
-		 debug="true">
-		</javac>
+	    <javac srcdir="${common-src.dir}"
+			 destdir="${emulator-build.dir}"
+			 includeAntRuntime="no"
+			 includeJavaRuntime="no"
+			 classpath="${emulatorclasspath}:${userLibs}"
+			 target="${ant.java.version}"
+			 source="${ant.java.version}"
+			 compiler="javac${ant.java.version}"
+			 debug="true">
+	    </javac>
+	  	
+	  	<javac srcdir="${robot-program-src.dir}"
+	  	     destdir="${emulator-build.dir}"
+	  	     includeAntRuntime="no"
+	  	     includeJavaRuntime="no"
+	  	     classpath="${classpath}:${userLibs}"
+	  	     target="${ant.java.version}"
+	  	     source="${ant.java.version}"
+	  	     compiler="javac${ant.java.version}"
+	  	     debug="true">
+	  		<classpath>
+	  			<pathelement path="${emulatorclasspath}"/>
+	  			<pathelement path="${userLibs}"/>
+	  			<pathelement location="${build.dir}"/>
+	  		</classpath>
+	  	</javac>
 	</target>
 </project>
