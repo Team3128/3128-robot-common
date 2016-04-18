@@ -240,4 +240,19 @@ public class RobotMath {
 	{
 		return number * number;
 	}
+	
+	/**
+	 * If the abs value of the number is less than the threshold, return 0, otherwise return the number
+	 * @param value
+	 * @param threshold
+	 * @return
+	 */
+	public static double threshold(double value, double threshold)
+	{
+		if(Math.abs(value) < Math.abs(threshold))
+		{
+			return 0;
+		}
+		return value;
+	}
 }

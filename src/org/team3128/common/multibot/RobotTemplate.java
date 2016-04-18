@@ -84,6 +84,7 @@ public class RobotTemplate extends IterativeRobot
     	//re-construct all of the autonomous programs so they can be run again
     	if(wasInAutonomous)
     	{
+    		Log.info("RobotTemplate", "Re-constructing auto programs");
     		main.addAutoPrograms(autoChooser);
     	}
     	
