@@ -114,9 +114,9 @@ public abstract class NarwhalRobot extends RobotBase
 	
 	boolean wasInAutonomous = false;
 	
-	private boolean m_disabledInitialized = false;
-	private boolean m_autonomousInitialized = false;
-	private boolean m_teleopInitialized = false;
+	private boolean disabledInitialized = false;
+	private boolean autonomousInitialized = false;
+	private boolean teleopInitialized = false;
 	private boolean testInitialized = false;
 	
 	public void startCompetition()
@@ -166,10 +166,10 @@ public abstract class NarwhalRobot extends RobotBase
 			if (isDisabled()) {
 				// call DisabledInit() if we are now just entering disabled mode from
 				// either a different mode or from power-on
-				if (!m_disabledInitialized) {
+				if (!disabledInitialized) {
 					LiveWindow.setEnabled(false);
 					
-					if(m_autonomousInitialized)
+					if(autonomousInitialized)
 					{
 						Log.info("NarwhalRobot", "Re-constructing autonomous sequences");
 						//re-construct the autonomous programs
@@ -177,10 +177,10 @@ public abstract class NarwhalRobot extends RobotBase
 					}
 					
 					disabledInit();
-					m_disabledInitialized = true;
+					disabledInitialized = true;
 					// reset the initialization flags for the other modes
-					m_autonomousInitialized = false;
-					m_teleopInitialized = false;
+					autonomousInitialized = false;
+					teleopInitialized = false;
 					testInitialized = false;
 				}
 				if (nextPeriodReady()) {
@@ -194,9 +194,9 @@ public abstract class NarwhalRobot extends RobotBase
 					LiveWindow.setEnabled(true);
 					testInit();
 					testInitialized = true;
-					m_autonomousInitialized = false;
-					m_teleopInitialized = false;
-					m_disabledInitialized = false;
+					autonomousInitialized = false;
+					teleopInitialized = false;
+					disabledInitialized = false;
 				}
 				if (nextPeriodReady()) {
 					FRCNetworkCommunicationsLibrary.FRCNetworkCommunicationObserveUserProgramTest();
@@ -205,7 +205,7 @@ public abstract class NarwhalRobot extends RobotBase
 			} else if (isAutonomous()) {
 				// call autonomousInit() if this is the first time
 				// we've entered autonomous_mode
-				if (!m_autonomousInitialized) {
+				if (!autonomousInitialized) {
 					LiveWindow.setEnabled(false);
 					// KBS NOTE: old code reset all PWMs and relays to "safe values"
 					// whenever entering autonomous mode, before calling
@@ -215,10 +215,10 @@ public abstract class NarwhalRobot extends RobotBase
 			        
 					autonomousInit(); //we probably want to call this first, as it may set preconditions for autonomous
 					runAutoProgram(); 
-					m_autonomousInitialized = true;
+					autonomousInitialized = true;
 					testInitialized = false;
-					m_teleopInitialized = false;
-					m_disabledInitialized = false;
+					teleopInitialized = false;
+					disabledInitialized = false;
 					
 			        Log.info("NarwhalRobot", "Auto Initialization Done!");
 				}
@@ -230,7 +230,7 @@ public abstract class NarwhalRobot extends RobotBase
 			} else {
 				// call Teleop_Init() if this is the first time
 				// we've entered teleop_mode
-				if (!m_teleopInitialized) 
+				if (!teleopInitialized) 
 				{
 					LiveWindow.setEnabled(false);
 					
@@ -238,10 +238,10 @@ public abstract class NarwhalRobot extends RobotBase
 					
 					teleopInit();
 					recountAllControls();
-					m_teleopInitialized = true;
+					teleopInitialized = true;
 					testInitialized = false;
-					m_autonomousInitialized = false;
-					m_disabledInitialized = false;
+					autonomousInitialized = false;
+					disabledInitialized = false;
 					
 			        Log.info("NarwhalRobot", "Teleop Initialization Done!");
 				}
@@ -253,7 +253,7 @@ public abstract class NarwhalRobot extends RobotBase
 				}
 			}
 			
-			if(!m_autonomousInitialized) //don't need to wait for control data if we are in autonomous
+			if(!autonomousInitialized) //don't need to wait for control data if we are in autonomous
 			{
 				m_ds.waitForData();
 			}
