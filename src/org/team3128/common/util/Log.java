@@ -24,8 +24,10 @@ public class Log
 	 */
 	public static void fatalException(String category, String userMessage, Exception exception)
 	{
-		String exceptionMessage = String.format("%s -- %s: %s", userMessage, exception.getClass().getSimpleName());
+		String exceptionMessage = String.format("%s -- %s: %s", userMessage, exception.getClass().getSimpleName(), exception.getMessage());
 		log("Fatal", category, exceptionMessage);
+		
+		exception.printStackTrace();
 		
 		//make it show up on the DS as well
 		DriverStation.reportError("Fatal Error: " + exceptionMessage, true);

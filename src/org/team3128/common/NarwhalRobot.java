@@ -149,6 +149,10 @@ public abstract class NarwhalRobot extends RobotBase
         	fail();
         }
         
+        //construct auto programs the first time
+		setupAutoChooser();
+
+        
         Log.info("NarwhalRobot", "Starting Dashboard Update Thread...");
         dashboardUpdateThread = new Thread(this::updateDashboardLoop, "Dashboard Update Thread");
         dashboardUpdateThread.start();
