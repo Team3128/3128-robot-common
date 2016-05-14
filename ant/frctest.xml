@@ -171,7 +171,7 @@
 	  	     destdir="${emulator-build.dir}"
 	  	     includeAntRuntime="no"
 	  	     includeJavaRuntime="no"
-	  	     classpath="${classpath}:${userLibs}"
+	  	     classpath="${emulatorclasspath}:${userLibs}"
 	  	     target="${ant.java.version}"
 	  	     source="${ant.java.version}"
 	  	     compiler="javac${ant.java.version}"
