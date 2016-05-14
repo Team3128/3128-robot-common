@@ -1,8 +1,8 @@
 package org.team3128.common.drive;
 
+import org.team3128.common.RobotProperties;
 import org.team3128.common.hardware.motor.MotorGroup;
 import org.team3128.common.listener.ListenerManager;
-import org.team3128.common.multibot.RobotProperties;
 import org.team3128.common.util.Log;
 
 /**

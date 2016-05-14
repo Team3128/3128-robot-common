@@ -18,6 +18,20 @@ public class Log
 	}
 	
 	/**
+	 * Log a FATAL error due to an exception, after which the robot cannot (properly) function. <br>
+	 * Prints your message, and the exception's name, message, and stacktrace.
+
+	 */
+	public static void fatalException(String category, String userMessage, Exception exception)
+	{
+		String exceptionMessage = String.format("%s -- %s: %s", userMessage, exception.getClass().getSimpleName());
+		log("Fatal", category, exceptionMessage);
+		
+		//make it show up on the DS as well
+		DriverStation.reportError("Fatal Error: " + exceptionMessage, true);
+	}
+	
+	/**
 	 * Log a failure which may kill one function or one thread, however the robot as a whole can keep functioning.
 	 * @param category
 	 * @param message

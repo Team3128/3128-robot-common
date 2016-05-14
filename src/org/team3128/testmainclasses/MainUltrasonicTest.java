@@ -1,60 +1,34 @@
 package org.team3128.testmainclasses;
 
+import org.team3128.common.NarwhalRobot;
 import org.team3128.common.hardware.ultrasonic.IUltrasonic;
 import org.team3128.common.hardware.ultrasonic.MaxSonar;
 import org.team3128.common.hardware.ultrasonic.MaxSonar.Resolution;
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.listener.controllers.ControllerXbox;
-import org.team3128.common.multibot.MainClass;
-import org.team3128.common.multibot.RobotTemplate;
-import org.team3128.common.util.GenericSendableChooser;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.SerialPort.Port;
-import edu.wpi.first.wpilibj.command.CommandGroup;
 
-public class MainUltrasonicTest extends MainClass {
+public class MainUltrasonicTest extends NarwhalRobot {
 
 	public ListenerManager lm;
 
 	public IUltrasonic testUltrasonic;
-	
-	public MainUltrasonicTest() 
+
+	@Override
+	protected void constructHardware()
 	{
 		lm = new ListenerManager(new Joystick(4));
 
-		testUltrasonic = new MaxSonar(2, Resolution.MM, Port.kOnboard);
+		testUltrasonic = new MaxSonar(2, Resolution.MM, Port.kOnboard);		
 	}
 
 	@Override
-	protected void initializeRobot(RobotTemplate robotTemplate) 
+	protected void setupListeners()
 	{
-		robotTemplate.addListenerManager(lm);
-	}
-
-	@Override
-	protected void addAutoPrograms(GenericSendableChooser<CommandGroup> autoChooser) {
-
-	}
-
-	@Override
-	protected void initializeDisabled() {
-
-	}
-
-	@Override
-	protected void updateDashboard() {
-
-	}
-
-	@Override
-	protected void initializeAuto() {
-
-	}
-
-	@Override
-	protected void initializeTeleop()
-	{
+		addListenerManager(lm);
+		
 		lm.nameControl(ControllerXbox.X, "Ping");
 
 		lm.nameControl(ControllerXbox.LB, "AutoPingOn");
@@ -64,6 +38,19 @@ public class MainUltrasonicTest extends MainClass {
 		lm.addButtonDownListener("AutoPingOff", () -> testUltrasonic.setAutoPing(false));
 		
 		lm.addButtonDownListener("AutoPingOn", () -> testUltrasonic.setAutoPing(true));
+		
+	}
+
+	@Override
+	protected void teleopInit()
+	{
+		
+	}
+
+	@Override
+	protected void autonomousInit()
+	{
+		
 	}
 
 }

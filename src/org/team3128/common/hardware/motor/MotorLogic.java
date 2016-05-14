@@ -2,7 +2,7 @@
 
 import java.util.HashSet;
 
-import org.team3128.common.multibot.RobotProperties;
+import org.team3128.common.RobotProperties;
 
 /**
 * MotorLogic is an abstract superclass for classes that define the behavior of a motor.  

@@ -1,4 +1,4 @@
-package org.team3128.common.multibot;
+package org.team3128.common;
 
 
 /**
