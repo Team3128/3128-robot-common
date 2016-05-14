@@ -140,7 +140,7 @@ public class RelativePIDAngleLogic extends MotorLogic
 	    		//errorSum = -errorLimit;
 	    	}
 	    	
-	        double output = error * kP + errorSum * kI + kD * (error - prevError);
+	        double output = error * kP + errorSum * kI + kD * (error - prevError) / dt;
 	        
 	        prevError = error;
 	        
@@ -156,7 +156,7 @@ public class RelativePIDAngleLogic extends MotorLogic
 	        }
 	        consecutiveCorrectPositions = 0;
 	        
-	        power = RobotMath.makeValidPower(output);
+	        power = RobotMath.clampPosNeg1(output);
     	}
     	
     	return power;

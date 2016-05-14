@@ -126,8 +126,8 @@ public class TankDrive
     	joyY *= throttle;
     	joyX *= throttle;
     	
-    	spdR = RobotMath.makeValidPower(joyY + joyX);
-    	spdL = RobotMath.makeValidPower(joyY - joyX);
+    	spdR = RobotMath.clampPosNeg1(joyY + joyX);
+    	spdL = RobotMath.clampPosNeg1(joyY - joyX);
     	
     	//Log.debug("TankDrive", "x1: " + joyX + " throttle: " + throttle + " spdR: " + spdR + " spdL: " + spdL);
 
@@ -361,14 +361,14 @@ public class TankDrive
         {
     		startTime = System.currentTimeMillis();
     		
-    		double speedLeft = encLeft.getSpeedInRPM();
+    		double speedLeft = encLeft.getAngularSpeed();
     		leftSideDirection = RobotMath.sgn(speedLeft);
     		if(Math.abs(speedLeft) > threshold)
     		{
     			leftMotors.setTarget(AutoUtils.speedMultiplier * -1 * _power * leftSideDirection);
     		}
     		
-    		double speedRight = encRight.getSpeedInRPM();
+    		double speedRight = encRight.getAngularSpeed();
     		rightSideDirection = RobotMath.sgn(speedRight);
     		if(Math.abs(speedRight) > threshold)
     		{
@@ -387,15 +387,15 @@ public class TankDrive
     			timedOut = true;
     		}
     		
-    		double leftSpeedRPM = encLeft.getSpeedInRPM();
-    		if(RobotMath.sgn(leftSpeedRPM) != leftSideDirection || leftSpeedRPM < threshold)
+    		double leftSpeed = encLeft.getAngularSpeed();
+    		if(RobotMath.sgn(leftSpeed) != leftSideDirection || leftSpeed < threshold)
     		{
     			leftSideFinished = true;
     			leftMotors.setTarget(0);
     		}
     		
-    		double rightSpeedRPM = encRight.getSpeedInRPM();
-    		if(RobotMath.sgn(rightSpeedRPM) != rightSideDirection || rightSpeedRPM < threshold)
+    		double rightSpeed = encRight.getAngularSpeed();
+    		if(RobotMath.sgn(rightSpeed) != rightSideDirection || rightSpeed < threshold)
     		{
     			rightSideFinished = true;
     			rightMotors.setTarget(0);
@@ -492,7 +492,7 @@ public class TankDrive
 
         protected void initialize()
         {
-    		enc = RobotMath.floor_double_int(cmToEncDegrees((Math.PI * wheelBase)*(abs(_degs)/360.0))) * 1.05; 
+    		enc = RobotMath.floor(cmToEncDegrees((Math.PI * wheelBase)*(abs(_degs)/360.0))) * 1.05; 
     		//NOTE: InPlaceTurn seems to consistently come short.  A scaling factor has been added to fix this
     		// TODO: find out why!
     		clearEncoders();
@@ -723,7 +723,7 @@ public class TankDrive
        protected void execute()
        {
        	//P calculation
-       	double error = encLeft.getSpeedInRPM() -  encRight.getSpeedInRPM();
+       	double error = encLeft.getAngularSpeed() -  encRight.getAngularSpeed();
        	pow += kP * error;
        	pow += kD * lastError;
        	

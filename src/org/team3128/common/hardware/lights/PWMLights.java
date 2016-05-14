@@ -130,8 +130,8 @@ public class PWMLights
 		double currentG = originalColor.getG();
 		double currentB = originalColor.getB();
 		
-		int numSteps = RobotMath.ceil_double_int((time / 1000.0) * resolution);
-		int sleepTime = RobotMath.ceil_double_int(1000.0 / resolution);
+		int numSteps = RobotMath.ceil((time / 1000.0) * resolution);
+		int sleepTime = RobotMath.ceil(1000.0 / resolution);
 		
 		int differenceR = newColor.getR() - originalColor.getR();
 		double incrementR = differenceR / (double)numSteps;

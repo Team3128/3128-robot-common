@@ -47,7 +47,7 @@ public class RobotTemplate extends IterativeRobot
 	@Override
     public void robotInit()
     {
-        Log.info("RobotTemplate", "Welcome to the FRC Team 3128 No-Longer-Event System version 3.1!");
+        Log.info("RobotTemplate", "Welcome to the FRC Team 3128 No-Longer-Event System version 3.2b!");
         Log.info("RobotTemplate", "Initializing Robot...");
         
         if(!constructMainClass())
@@ -81,11 +81,6 @@ public class RobotTemplate extends IterativeRobot
     @Override
     public void disabledInit()
     {
-    	//re-construct all of the autonomous programs so they can be run again
-    	if(wasInAutonomous)
-    	{
-    		main.addAutoPrograms(autoChooser);
-    	}
     	
     	main.initializeDisabled();
     	main.currentMode = RobotMode.DISABLED;
@@ -136,22 +131,11 @@ public class RobotTemplate extends IterativeRobot
     }
     
     // YOU'D BETTER NOT CHANGE ANYTHING
-    /**
-     * Remove all listeners from every ListenerManager.
-     */
-    private void resetListeners()
-    {
-    	for(ListenerManager manager : listenerManagers)
-    	{
-    		manager.removeAllListeners();
-    	}
-    }
 
     @Override
     public void autonomousInit()
     {
         Log.info("RobotTemplate", "Initializing Autonomous...");
-        resetListeners();
         main.currentMode = RobotMode.AUTONOMOUS;
         main.initializeAuto();
         
@@ -169,7 +153,6 @@ public class RobotTemplate extends IterativeRobot
 				autoCommand.start();
 			}
         }
-		wasInAutonomous = true;
 		
         Log.info("RobotTemplate", "Auto Initialization Done!");
     }
@@ -178,7 +161,6 @@ public class RobotTemplate extends IterativeRobot
     public void teleopInit()
     {
         Log.info("RobotTemplate", "Initializing Teleop...");
-    	resetListeners();
     	
     	for(ListenerManager manager : listenerManagers)
     	{
@@ -193,12 +175,19 @@ public class RobotTemplate extends IterativeRobot
     @Override
     public void disabledPeriodic()
     {
+    	//re-construct all of the autonomous programs so they can be run again
+    	if(wasInAutonomous)
+    	{
+    		main.addAutoPrograms(autoChooser);
+    		wasInAutonomous = false;
+    	}
 		Thread.yield();
     }
 
     @Override
     public void autonomousPeriodic()
     {   
+		wasInAutonomous = true;
     	Scheduler.getInstance().run();
     }
 

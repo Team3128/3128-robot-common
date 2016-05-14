@@ -131,7 +131,7 @@ public class SwerveDrive2
 			}
 			else
 			{
-				module.setAngleAndPower(headingAngle, setAngle, RobotMath.makeValidPower(headingMagnitude));
+				module.setAngleAndPower(headingAngle, setAngle, RobotMath.clampPosNeg1(headingMagnitude));
 			}
 		}
 	}

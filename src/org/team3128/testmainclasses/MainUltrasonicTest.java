@@ -4,7 +4,7 @@ import org.team3128.common.hardware.ultrasonic.IUltrasonic;
 import org.team3128.common.hardware.ultrasonic.MaxSonar;
 import org.team3128.common.hardware.ultrasonic.MaxSonar.Resolution;
 import org.team3128.common.listener.ListenerManager;
-import org.team3128.common.listener.controller.ControllerXbox;
+import org.team3128.common.listener.controllers.ControllerXbox;
 import org.team3128.common.multibot.MainClass;
 import org.team3128.common.multibot.RobotTemplate;
 import org.team3128.common.util.GenericSendableChooser;
@@ -55,9 +55,15 @@ public class MainUltrasonicTest extends MainClass {
 	@Override
 	protected void initializeTeleop()
 	{
-		lm.addListener(ControllerXbox.XDOWN, () -> System.out.println(testUltrasonic.getDistance()));
-		lm.addListener(ControllerXbox.TRIGGERL, () -> testUltrasonic.setAutoPing(false));
-		lm.addListener(ControllerXbox.TRIGGERR, () -> testUltrasonic.setAutoPing(true));
+		lm.nameControl(ControllerXbox.X, "Ping");
+
+		lm.nameControl(ControllerXbox.LB, "AutoPingOn");
+		lm.nameControl(ControllerXbox.RB, "AutoPingOff");
+
+		lm.addButtonDownListener("Ping", () -> System.out.println(testUltrasonic.getDistance()));
+		lm.addButtonDownListener("AutoPingOff", () -> testUltrasonic.setAutoPing(false));
+		
+		lm.addButtonDownListener("AutoPingOn", () -> testUltrasonic.setAutoPing(true));
 	}
 
 }

@@ -2,6 +2,7 @@ package org.team3128.common.hardware.motor.logic;
 
 import org.team3128.common.hardware.motor.MotorLogic;
 import org.team3128.common.util.VelocityPID;
+import org.team3128.common.util.datatypes.PIDConstants;
 
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
@@ -19,22 +20,17 @@ public class ConstantCurrentLogic extends MotorLogic
 	//the calculation for this is pretty much the same as velocity PID.
 	//so, we can use the same math object
 	private VelocityPID pidCalc;
-    private double feedForward;
-    private double estimatedOutput = 0;
     
     /**
      * Construct ConstantCurrentLogic
      * @param panel PDP object to use
      * @param motorPort the port number that the motor is in on the PDP.
-     * @param kP the konstant of proportionality to use in scaling the current
-     * @param feedForward the feedforward constant to use, as in how many amps are used by a motor power of 1
      */
-    public ConstantCurrentLogic(PowerDistributionPanel panel, int motorPort, double kP, double feedForward)
+    public ConstantCurrentLogic(PowerDistributionPanel panel, int motorPort, PIDConstants pidConstants, double feedForward)
     {
         this.panel = panel;
         this.motorPort = motorPort;
-        pidCalc = new VelocityPID(kP, 0, 0);
-        this.feedForward = feedForward;
+        pidCalc = new VelocityPID(pidConstants);
     }
    
     @Override
@@ -45,9 +41,7 @@ public class ConstantCurrentLogic extends MotorLogic
     {
     	pidCalc.setDesiredVelocity(d);
     	
-    	//estimate the motor power needed to get this current
-    	//as a starting point for the p control
-    	estimatedOutput = feedForward * d;
+
     }
 
     @Override
@@ -55,14 +49,13 @@ public class ConstantCurrentLogic extends MotorLogic
     {
         double currentCurrent = panel.getCurrent(motorPort);
         pidCalc.update(currentCurrent);
-        return pidCalc.getOutputAddition() + estimatedOutput;
+        return pidCalc.getOutput();
     }
    
     @Override
     public synchronized void reset()
     {
     	pidCalc.setDesiredVelocity(0);
-    	estimatedOutput = 0;
     	pidCalc.resetIntegral();
     }
 

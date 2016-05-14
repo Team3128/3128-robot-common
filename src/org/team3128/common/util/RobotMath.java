@@ -1,6 +1,7 @@
 package org.team3128.common.util;
 
 import org.team3128.common.util.enums.MotorDir;
+import org.team3128.common.util.units.Angle;
 
 
 /**
@@ -71,28 +72,6 @@ public class RobotMath {
        return Math.abs(n) / n;
    }
   
-   /**
-    * Check if a motor power is between -1 and 1 inclusive
-    * @param pow motor power
-    * <p/>
-    * @return whether or not the power is valid
-    */
-   public static boolean isValidPower(double pow)
-   {
-       return (pow >= -1 && pow <= 1);
-   }
-
-   /**
-    * Makes the provided power into a valid motor power level.
-    * <p/>
-    * @param pow power level to convert
-    * <p/>
-    * @return a properly-limited power level
-    */
-   public static double makeValidPower(double pow)
-   {
-       return (pow < -1 ? -1 : (pow > 1 ? 1 : pow));
-   }
 
    /**
     * Determines the appropriate direction for a motor to turn to get to an angle.
@@ -114,28 +93,13 @@ public class RobotMath {
    }
 
    /**
-    * Convert degrees to radians
-    * @param angle degrees
-    * @return radians
-    */
-   public static double dTR(double angle) {return Math.PI * angle / 180.0;}
-
-   /**
-    * Convert radians to degrees
-    *
-    * @param rad radians
-    * @return degrees
-    */
-   public static double rTD(double rad) {return rad * (180.0 / Math.PI);}
-   
-   /**
     * Clamps value from (inclusive) minimum to maximum 
     * @param value
     * @param minimum
     * @param maximum
     * @return
     */
-   public static int clampInt(int value, int minimum, int maximum)
+   public static int clamp(int value, int minimum, int maximum)
    {
 	   if(!(minimum <= maximum))
 	   {
@@ -151,74 +115,84 @@ public class RobotMath {
     * @param maximum
     * @return
     */
-   public static double clampDouble(double value, double minimum, double maximum)
+   public static double clamp(double value, double minimum, double maximum)
    {
 	   return Math.min(Math.max(value, minimum), maximum); 
    }
    
+	/**
+	 * Clamps value between positive and negative 1 and returns value.
+	 * 
+	 * Great for motor powers!
+	 * @param d
+	 */
+	public static double clampPosNeg1(double d) {
+		clamp(d, -1, 1);
+		return d;
+	}
+   
    public static final double SQUARE_ROOT_TWO = Math.sqrt(2.0);
    
-   public static double getCIMExpectedRPM(double power)
-   {
-	   //5310 is the max RPM of a CIM at full power
-	   return 5310 * power;
-   }
-   
-   public static double getEstCIMPowerForRPM(double rpm)
-   {
-	   
-	   //5310 is the max RPM of a CIM at full power
-	   return rpm / 5310;
-   }
-   
-   /**
-    * 
-    * @param toFloor
-    * @return An integer whose value is the same as or less than one lower than the argument.
-    * Throws if the argument is too large to be an int, is NaN, or posiive or negative infinity.
-    */
-   public static int floor_double_int(double toFloor)
-   {
-	   double floored = Math.floor(toFloor);
-	   
-	   if(!Double.isFinite(floored) || toFloor > Integer.MAX_VALUE)
-	   {
-		   throw new IllegalArgumentException("The provided double cannot be represented by an int");
-	   }
-	   
-	   return (int)floored;
-   }
-   
-   /**
-    * 
-    * @param toCeil
-    * @return An integer whose value is the same or less than one higher than the argument.
-    * Throws if the argument is too large to be an int, is NaN, or posiive or negative infinity.
-    */
-   public static int ceil_double_int(double toCeil)
-   {
-	   double ceilinged = Math.ceil(toCeil);
-	   if(!Double.isFinite(ceilinged) || ceilinged > Integer.MAX_VALUE)
-	   {
-		   throw new IllegalArgumentException("The provided double cannot be represented by an int");
-	   }
-	   
-	   return (int)ceilinged;
-   }
+	/**
+	 * If the abs value of the number is less than the threshold, return 0, otherwise return the number
+	 * @param value
+	 * @param threshold
+	 * @return
+	 */
+	public static double thresh(double value, double threshold)
+	{
+		if(Math.abs(value) < Math.abs(threshold))
+		{
+			return 0;
+		}
+		return value;
+	}
+	
+	/**
+	 * If the abs value of the number is less than the threshold, return 0, otherwise return the number
+	 * @param value
+	 * @param threshold
+	 * @return
+	 */
+	public static float thresh(float value, float threshold)
+	{
+		if(Math.abs(value) < Math.abs(threshold))
+		{
+			return 0;
+		}
+		return value;
+	}
+	
+	
+	/**
+	 * Converts linear distance to angular.
+	 * 
+	 * For example, if a wheel was touching a surface, and the surface moved x cm, then the wheel turned LinearDistToAngular(x) degrees.
+	 * @param cm
+	 * @param wheelCircumference the circumference of the circle
+	 * @return
+	 */
+	public static double LinearDistToAngular(double d, double circumference)
+	{
+		return (360 / circumference) * d;
+	}
+	
+	/**
+	 * Converts angular distance to linear.
+	 * 
+	 * For example, if a wheel was touching a surface, and the wheel turned y degrees, then the surface moved AngularDistToLinear(y) degrees.
+	 * @param cm
+	 * @param wheelCircumference the circumference of the circle
+	 * @return
+	 */
+	public static double angularDistToLinear(double deg, double circumference)
+	{
+		return (deg / 360) * circumference;
+	}
+	
 
    //hidden constructor
    private RobotMath() {}
-
-	/**
-	 * Convert cm of robot movement to degrees of wheel movement
-	 * @param cm
-	 * @param wheelCircumference the circumference of the wheels
-	 * @return
-	 */
-	public static double cmToDegrees(double cm, double wheelCircumference)
-	{
-		return (360 / wheelCircumference) * cm;
-	}
 	
 	
 	/**
@@ -240,4 +214,170 @@ public class RobotMath {
 	{
 		return number * number;
 	}
+	
+	/**
+	 * Returns the exponent needed to make e (Euler's number) the given number.
+	 * @param d
+	 */
+	public static double logE(double d) {
+		return Math.log(d);
+	}
+	
+	/**
+	 * Returns the exponent needed to make 10 the given number.
+	 * @param d
+	 */
+	public static double log10(double d) {
+		return Math.log10(d);
+	}
+	
+	//calculate this once here for speed
+	static final private double log2Base10 = Math.log10(2);
+	
+	/**
+	 * Returns the exponent needed to make 2 the given number.
+	 * @param d
+	 */
+	public static double log2(double d) {
+		return Math.log10(d) / log2Base10;
+	}
+	
+	/**
+	 * Returns the exponent needed to make an arbitrary base the given number.
+	 * @param d
+	 */
+	public static double logN(double base, double num) {
+		return Math.log(num) / Math.log(base);
+	}
+	
+	/**
+	 * Raises an integer to a integer power >= 0.
+	 * 
+	 * Much more lightweight than the regular function, but also more restricted.  Negative powers are treated as 0.
+	 */
+	public static int intPow(int number, int power)
+	{
+		int result = 1;
+		for(; power >= 1; --power)
+		{
+			result *= number;
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Returns d rounded to the nearest integer (ties round towards positive infinity).
+	 * 
+	 * Throws if the argument can't fit in an int.
+	 * @param d
+	 */
+	public static int intRound(double d)
+	{
+		long roundedLong = Math.round(d);
+		
+		if(Math.abs(roundedLong) > Integer.MAX_VALUE)
+		{
+			throw new IllegalArgumentException("Provided number is too large to be an integer!");
+		}
+		
+		return (int)roundedLong;
+	}
+	
+	/**
+	 * Returns the cosine of angle d in degrees.
+	 * @param d
+	 */
+	public static double cos(double d) {
+		return Math.cos(d / Angle.RADIANS); // convert to radians
+	}
+	
+	/**
+	 * Returns the sine of angle d in degrees.
+	 * @param d
+	 */
+	public static double sin(double d) {
+		return Math.sin(d / Angle.RADIANS);
+	}
+	
+	/**
+	 * Returns the tangent of angle d in degrees.
+	 * @param d
+	 */
+	public static double tan(double d) {
+		return Math.tan(d / Angle.RADIANS);
+	}
+	
+	/**
+	 * Returns the smallest integer greater to or equal to d.
+	 * 
+	 * Throws if the result cannot be represented by an integer.
+	 * @param d
+	 */
+	public static int ceil(double d) 
+	{
+		double ceilinged = Math.ceil(d);
+		if(!Double.isFinite(ceilinged) || ceilinged > Integer.MAX_VALUE)
+		{
+			throw new IllegalArgumentException("The provided double cannot be represented by an int");
+		}
+		
+		return (int)ceilinged;
+	}
+	
+	/**
+	 * Returns the largest integer smaller to or equal to d.
+	 * 
+	 * Throws if the result cannot be represented by an integer.
+	 * @param d
+	 */
+	public static int floor(double d)
+	{
+		double floored = Math.floor(d);
+		   
+		if(!Double.isFinite(floored) || floored > Integer.MAX_VALUE)
+		{
+			throw new IllegalArgumentException("The provided double cannot be represented by an int");
+		}
+		   
+		return (int)floored;
+	}
+	
+	/**
+	 * Returns the arc-sine of d - the angle in degrees whose sine is d.
+	 * @param d
+	 */
+	public static double asin(double d) {
+		return Math.asin(d) * Angle.RADIANS;
+	}
+	
+	/**
+	 * Returns the arc-cosine of d - the angle in degrees whose cosine is d.
+	 * @param d
+	 */
+	public static double acos(double d) {
+		return Math.acos(d) * Angle.RADIANS;
+	}
+	
+	
+	/**
+	 * Returns the arc-tangent of d - the angle in degrees whose tangent is d.
+	 * @param d
+	 */
+	public static double atan(double d) {
+		return Math.atan(d) * Angle.RADIANS;
+	}
+	
+	/**
+	 * Returns the angle in degrees whose Tan is y/x.
+	 * 
+	 * Takes the X and Y values separately so that the result can be placed in the correct quadrant.
+	 * @param x
+	 * @param y
+	 */
+	public static double atan2(double x, double y) {
+		return Math.atan2(y, x) * Angle.RADIANS;
+	}
+	
+
 }

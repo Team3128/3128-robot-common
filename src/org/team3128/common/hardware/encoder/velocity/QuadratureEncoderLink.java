@@ -30,7 +30,7 @@ public class QuadratureEncoderLink implements IVelocityEncoder, IDistanceEncoder
 	}
 
 	@Override
-	public double getSpeedInRPM() {
+	public double getAngularSpeed() {
 		
 		//getRate returns rotations / second
 		return (encoder.getRate() / Angle.ROTATIONS) * 60;

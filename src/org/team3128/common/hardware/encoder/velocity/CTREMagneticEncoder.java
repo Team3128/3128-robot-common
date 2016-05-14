@@ -67,7 +67,7 @@ public class CTREMagneticEncoder implements IVelocityEncoder, IDistanceEncoder,
 	}
 
 	@Override
-	public double getSpeedInRPM()
+	public double getAngularSpeed()
 	{
 
 		// getRate returns rotations / second

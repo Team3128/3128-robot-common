@@ -5,23 +5,28 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.team3128.common.listener.controltype.Always;
-import org.team3128.common.listener.controltype.Axis;
-import org.team3128.common.listener.controltype.Button;
-import org.team3128.common.listener.controltype.IControl;
-import org.team3128.common.listener.controltype.POV;
+import org.team3128.common.listener.callbacks.AxisListenerCallback;
+import org.team3128.common.listener.callbacks.POVListenerCallback;
+import org.team3128.common.listener.callbacks.TypelessListenerCallback;
+import org.team3128.common.listener.controltypes.Axis;
+import org.team3128.common.listener.controltypes.Button;
+import org.team3128.common.listener.controltypes.Control;
+import org.team3128.common.listener.controltypes.POV;
 import org.team3128.common.util.Log;
-import org.team3128.common.util.SynchronizedMultimap;
+import org.team3128.common.util.RobotMath;
+import org.team3128.common.util.datatypes.Pair;
+import org.team3128.common.util.datatypes.SynchronizedMultimap;
 
 import edu.wpi.first.wpilibj.Joystick;
 
 /**
  * This class combines the functions of XControl and ListenerManager from the
- * old robot code. It is constructed with one Joystick object, which,
- * confusingly, seems to be the wpilib metaphor for an entire controller. It
+ * old robot code. It is constructed with one Joystick object (which,
+ * confusingly, seems to be the wpilib metaphor for an entire controller). It
  * polls the controller at a set interval, and invokes listeners whenever a
  * control they're attached to has changed (the button listeners are set for
  * either up or down). You may register the same instance of a listener object for as
@@ -41,37 +46,42 @@ public class ListenerManager
 	private ReentrantLock _controlValuesMutex;
 
 	// maps the listeners to the control inputs
-	private SynchronizedMultimap<IControl, IListenerCallback> _listeners;
+	private SynchronizedMultimap<Control, AxisListenerCallback> axisListeners = new SynchronizedMultimap<Control, AxisListenerCallback>();
+	private SynchronizedMultimap<Control, Pair<TypelessListenerCallback, Boolean>> buttonListeners = new SynchronizedMultimap<Control, Pair<TypelessListenerCallback, Boolean>>();
+	private SynchronizedMultimap<Control, POVListenerCallback> povListeners = new SynchronizedMultimap<Control, POVListenerCallback>();
+	private SynchronizedMultimap<Control, TypelessListenerCallback> genericListeners = new SynchronizedMultimap<Control, TypelessListenerCallback>();
+
+	
+	private HashMap<String, Control> controlNames;
 
 	// wpilib object which represents a controller
 	private ArrayList<Joystick> _joysticks;
-
 		
-	//used for buddy-box syle joystick precedence, to determine if a joystick axis is being used.
+	//joystick threshold.
 	private static final double JOYSTICK_DEADZONE = .15;
 	
-	private class ControlValues
+	private static class ControlValues
 	{
 		public Set<Button> buttonValues;
 		
 		public HashMap<Axis, Double> joystickValues;
 		
-		public ArrayList<POV> povValues;
+		public HashMap<POV, POVValue> povValues;
 		ControlValues()
 		{
 			buttonValues = new HashSet<>();
 			joystickValues = new HashMap<Axis, Double>();
-			povValues = new ArrayList<POV>();
+			povValues = new HashMap<POV, POVValue>();
 		}
 	}
 	
 	private ControlValues currentControls;
-	
-	//1 indexed
-	private int numButtons;
 
 	//zero indexed
 	private int numAxes, numPOVs;
+	
+	//one indexed
+	private int numButtons;
 
 	/**
 	 * Construct a ListenerManager from joysticks and their type
@@ -90,116 +100,204 @@ public class ListenerManager
 		}
 		
 		_controlValuesMutex = new ReentrantLock();
-		_listeners = new SynchronizedMultimap<IControl, IListenerCallback>();
 		_joysticks = new ArrayList<>();
+		controlNames = new HashMap<>();
 		Collections.addAll(_joysticks, joysticks);
 		
 		recountControls();
 
 
-		//we don't want to do this, so that button events will still be sent if buttons are held while the robot is booting
-		currentControls = pollAllJoysticks();
-		
+		//we want to do this, so that button events will still be sent if buttons are held while the robot is booting
 		//currentControls = new ControlValues();
-	}
-
-	/**
-	 * Add a listener for the given listenable. Multiple listeners can be added
-	 * for the same listenable.
-	 * 
-	 * @param key
-	 * @param listener
-	 */
-	public void addListener(IControl key, IListenerCallback listener)
-	{
-		_listeners.put(key, listener);
 	}
 	
 	/**
-	 * Add a listener for the given list of controls.
+	 * Associate a name with the given control  Throws if the name is already in use.
+	 * @param control
+	 * @param name
+	 */
+	public void nameControl(Control control, String name)
+	{
+		if(controlNames.containsKey(control))
+		{
+			throw new IllegalArgumentException("This control already has a name!");
+		}
+		
+		controlNames.put(name, control);
+	}
+
+	/**
+	 * Add a no-argument listener for the given listenable. Multiple listeners can be added
+	 * for the same listenable.
 	 * 
-	 * @param keys
+	 * @param name
 	 * @param listener
 	 */
-	public void addListener(IListenerCallback listener, IControl... keys)
+	public void addListener(String name, TypelessListenerCallback listener)
 	{
-		for(IControl control : keys)
+		checkControlName(name);
+
+		genericListeners.put(controlNames.get(name), listener);
+	}
+	
+	/**
+	 * Add a listener for the named POV.
+	 */
+	public void addListener(String name, POVListenerCallback listener)
+	{
+		checkControlName(name);
+
+		povListeners.put(controlNames.get(name), listener);
+	}
+	
+	/**
+	 * Add a button listener for the named button, which will be fired when it is pressed.
+	 */
+	public void addButtonDownListener(String name, TypelessListenerCallback listener)
+	{
+		checkControlName(name);
+
+		buttonListeners.put(controlNames.get(name), new Pair<>(listener, true));
+	}
+	
+	/**
+	 * Add a button listener for the named button, which will be fired when it is released.
+	 */
+	public void addButtonUpListener(String name, TypelessListenerCallback listener)
+	{
+		checkControlName(name);
+
+		buttonListeners.put(controlNames.get(name), new Pair<>(listener, false));
+	}
+	
+	
+	/**
+	 * Add a listener for the named axis.
+	 * 
+	 * Will be called whenever the value changes, except if the change is inside the threshold
+	 */
+	public void addListener(String name, AxisListenerCallback listener)
+	{
+		checkControlName(name);
+
+		axisListeners.put(controlNames.get(name), listener);
+	}
+	
+	/**
+	 * Throw an IllegalArgumentException if the control name is invalid.
+	 */
+	private void checkControlName(String name)
+	{
+		if(!controlNames.containsKey(name))
 		{
-			_listeners.put(control, listener);
+			throw new IllegalArgumentException("Unknown control name \"" + name +'\"');
+		}
+	}
+	
+	/**
+	 * Add a listener for the given list of control names.
+	 * 
+	 * @param names
+	 * @param listener
+	 */
+	public void addMultiListener(TypelessListenerCallback listener, String... names)
+	{
+		
+		for(String controlName : names)
+		{
+			checkControlName(controlName);
+			
+			genericListeners.put(controlNames.get(controlName), listener);
 
 		}
 	}
 
 	/**
-	 * remove all listeners, period
+	 * Remove all listeners set for the given name.
 	 */
-	public void removeAllListeners()
+	public void removeAllListenersForControl(String name)
 	{
-		_listeners.clear();
+		Control control = controlNames.get(name);
+		
+		genericListeners.removeAll(control);
+		
+		if(control instanceof Button)
+		{
+			buttonListeners.removeAll(control);
+		}
+		else if(control instanceof Axis)
+		{
+			axisListeners.removeAll(control);
+		}
+		else if(control instanceof POV)
+		{
+			povListeners.removeAll(control);
+		}
 	}
 
-	/**
-	 * Remove all listeners set for the given listener. <br>
-	 * Note that removeAllListenersForControl(SomeController.FOOUP) is
-	 * <b>not</b> the same as
-	 * removeAllListenersForControl(SomeController.FOODOWN).
-	 * 
-	 * @param listener
-	 */
-	public void removeAllListenersForControl(IControl listener)
-	{
-		_listeners.removeAll(listener);
-	}
-
 	//
 	//
 	//
 
 	/**
-	 * Returns the boolean value of a button listenable (between A and R3).
-	 * Returns true if the button is pressed whether FOOUP or FOODOWN was given.
-	 * Does bounds checking, throws if value is out of range.
+	 * Returns the boolean value of a button by name.
 	 * 
-	 * @param button
-	 * @return
+	 * This function is thread-safe, and can be called at the same time as tick().
 	 */
-	public boolean getRawBool(Button button)
+	public boolean getButton(String name)
 	{
+		checkControlName(name);
+		
 		_controlValuesMutex.lock();
+		
 		boolean retval;
 
-		retval = currentControls.buttonValues.contains(button);
+		retval = currentControls.buttonValues.contains(controlNames.get(name));
 		_controlValuesMutex.unlock();
 		
 		return retval;
 	}
 
 	/**
-	 * Get the raw value for an axis.
+	 * Get the value of an axis.
+	 * 
+	 * This value is automatically thresheld to JOYSTICK_DEADZONE.
+	 * 
+	 * This function is thread-safe, and can be called at the same time as tick().
 	 * 
 	 * @param axis
 	 * @return
 	 */
-	public double getRawAxis(Axis axis)
+	public double getAxis(String name)
 	{
-		_controlValuesMutex.lock();
-		Double retval = 0.0;
+		checkControlName(name);
 		
-		if(axis.getCode() > numAxes)
-		{
-			Log.recoverable("ListenerManager", "Axis out of bounds.  Are you using the right controller object?");
-			return 0.0;
-		}
+		_controlValuesMutex.lock();
+		double retval = 0.0;
 
-		retval = currentControls.joystickValues.get(axis);
+		retval = currentControls.joystickValues.get(controlNames.get(name));
+		
+		_controlValuesMutex.unlock();
+		return retval;
+	}
+	
+	/**
+	 * Get the value of a POV.
+	 * 
+	 * This function is thread-safe, and can be called at the same time as tick().
+	 * 
+	 * @param axis
+	 * @return
+	 */
+	public POVValue getPOV(String name)
+	{
+		checkControlName(name);
+		
+		_controlValuesMutex.lock();
+		POVValue retval = null;
 
-		if (retval == null)
-		{
-			Log.recoverable(
-					"ListenerManager",
-					"Attempt to read data from ListenerManager whose thread has not finished starting");
-			return 0.0;
-		}
+		retval = currentControls.povValues.get(controlNames.get(name));
+		
 		_controlValuesMutex.unlock();
 		return retval;
 	}
@@ -225,7 +323,7 @@ public class ListenerManager
 
 				if(buttonValue)
 				{
-					newControls.buttonValues.add(new Button(counter, false));
+					newControls.buttonValues.add(new Button(counter));
 				}
 			}
 
@@ -233,7 +331,7 @@ public class ListenerManager
 			for (int counter = 0; counter <= numAxes; counter++)
 			{
 				Axis currAxis = new Axis(counter);
-				double thisJoystickValue = currentJoystick.getRawAxis(counter);
+				double thisJoystickValue = RobotMath.thresh(currentJoystick.getRawAxis(counter), JOYSTICK_DEADZONE);
 				if((!newControls.joystickValues.containsKey(currAxis)) || Math.abs(thisJoystickValue) > JOYSTICK_DEADZONE)
 				{
 					newControls.joystickValues.put(currAxis, thisJoystickValue);
@@ -243,21 +341,21 @@ public class ListenerManager
 			// read POV values
 			for (int counter = 0; counter <= numPOVs; counter++)
 			{
-				POV pov = POV.fromWPILIbAngle(counter, currentJoystick.getPOV(counter));
-				if(newControls.povValues.size() - 1 >= counter)
+				POVValue value = POVValue.fromWPILibAngle(currentJoystick.getPOV(counter));
+				if(newControls.povValues.size() <= counter)
 				{
-					POV oldValue = newControls.povValues.get(counter);
+					POVValue oldValue = newControls.povValues.get(new POV(counter));
 					if(oldValue == null || oldValue.getDirectionValue() == 0)
 					{
-						newControls.povValues.add(counter, pov);
+						newControls.povValues.put(new POV(counter), value);
 					}
 					
-					//else, use the preexsting value
+					//else, use the preexisting value
 				}
 				else
 				{
 					//add a new value
-					newControls.povValues.add(counter, pov);
+					newControls.povValues.put(new POV(counter), value);
 
 				}
 			
@@ -269,15 +367,15 @@ public class ListenerManager
 
 	}
 	
-	private void addListenersForControl(Set<IListenerCallback> listeners, IControl control)
+	private void addTypelessListenersForControl(Set<TypelessListenerCallback> listeners, Control control)
 	{
 		// get all its registered listeners
-		Collection<IListenerCallback> foundListeners = _listeners.get(control);
+		Collection<TypelessListenerCallback> foundListeners = genericListeners.get(control);
 
 		if (foundListeners != null && !foundListeners.isEmpty())
 		{
 			// loop through them
-			for (IListenerCallback callback : foundListeners)
+			for (TypelessListenerCallback callback : foundListeners)
 			{
 				listeners.add(callback);
 			}
@@ -286,94 +384,155 @@ public class ListenerManager
 	}
 
 	/**
-	 * Read controls and update listeners. Usually called by RobotTemplate when
-	 * WPILib ticks it.
+	 * Read controls and invoke listeners. Usually called by the robot main class.
 	 */
 	public void tick()
 	{
-		ControlValues newValues = pollAllJoysticks();
-		Set<IListenerCallback> listenersToInvoke = new HashSet<IListenerCallback>();
-
-		// add ALWAYS listenable
-		Collection<IListenerCallback> foundAlwaysListeners = _listeners
-				.get(Always.instance);
-
-		if (foundAlwaysListeners != null && !foundAlwaysListeners.isEmpty())
-		{
-			// loop through them
-			for (IListenerCallback callback : foundAlwaysListeners)
+		ControlValues newControls = pollAllJoysticks();
+		try
+		{		
+			//if the same generic listener is registered for multiple types of control, we need to execute it only once
+			//so we collect all of the generic listeners to execute in here to de-duplicate them.
+			Set<TypelessListenerCallback> genericListenersToInvoke = new HashSet<TypelessListenerCallback>();
+			
+			//don't need to lock _controlValuesMutex here because we know it's not going to be modified, because we're the only ones modifying it
+	
+			//save the old controls and swap in the new ones, so that if/when listeners check they will get the new data
+			ControlValues oldControls = currentControls;
+			
+			// update class variables to match new data
 			{
-				listenersToInvoke.add(callback);
+				_controlValuesMutex.lock();
+				currentControls = newControls;
+				_controlValuesMutex.unlock();
+			}
+			
+			//buttons
+			//--------------------------------------------------------------------------------------------------------------------------------------------------
+	
+			//check for pressed buttons
+			for(Button button : newControls.buttonValues)
+			{
+				if(!oldControls.buttonValues.contains(button))
+				{
+					addTypelessListenersForControl(genericListenersToInvoke, button);
+					
+					// get all its registered listeners
+					HashSet<Pair<TypelessListenerCallback, Boolean>> foundListeners = buttonListeners.get(button);
+	
+					if (foundListeners != null && !foundListeners.isEmpty())
+					{
+						// loop through them
+						for (Pair<TypelessListenerCallback, Boolean> callbackPair : foundListeners)
+						{
+							//button-press listener
+							if(callbackPair.right)
+							{
+								callbackPair.left.onListener();
+							}
+						}
+					}
+				}
+			}
+			
+			//check for unpressed buttons
+			for(Button button : oldControls.buttonValues)
+			{
+				if(!newControls.buttonValues.contains(button))
+				{
+					addTypelessListenersForControl(genericListenersToInvoke, button);
+					
+					// get all its registered listeners
+					HashSet<Pair<TypelessListenerCallback, Boolean>> foundListeners = buttonListeners.get(button);
+	
+					if (foundListeners != null && !foundListeners.isEmpty())
+					{
+						// loop through them
+						for (Pair<TypelessListenerCallback, Boolean> callbackPair : foundListeners)
+						{
+							//button-release listener
+							if(!callbackPair.right)
+							{
+								callbackPair.left.onListener();
+							}
+						}
+					}
+				}
+			}
+			
+			//joysticks
+			//--------------------------------------------------------------------------------------------------------------------------------------------------
+	
+			// loop through joystick values
+			for (Axis axis : newControls.joystickValues.keySet())
+			{
+				// has this particular value changed?
+				
+				double newValue = newControls.joystickValues.get(axis);
+				
+				if (Math.abs(oldControls.joystickValues.get(axis) - newValue) > .0001) //TODO there was an NPE here while practicing. It didn't recur. Investigate!
+				{
+					addTypelessListenersForControl(genericListenersToInvoke, axis);
+					
+					// get all its registered listeners
+					HashSet<AxisListenerCallback> foundListeners = axisListeners.get(axis);
+	
+					if (foundListeners != null && !foundListeners.isEmpty())
+					{
+						// loop through them
+						for (AxisListenerCallback callback : foundListeners)
+						{
+							callback.onListener(newValue);
+						}
+					}
+	
+				}
+			}
+			
+			//POVs
+			//--------------------------------------------------------------------------------------------------------------------------------------------------
+						
+			for(Map.Entry<POV, POVValue> newPOVEntry : newControls.povValues.entrySet())
+			{
+				POVValue oldPOVValue = oldControls.povValues.get(newPOVEntry.getKey().getIndex());
+				
+				if(oldPOVValue != null && !oldPOVValue.equals(newPOVEntry.getValue()))
+				{
+					addTypelessListenersForControl(genericListenersToInvoke, newPOVEntry.getKey());
+					
+					// get all its registered listeners
+					HashSet<POVListenerCallback> foundListeners = povListeners.get(newPOVEntry.getKey());
+	
+					if (foundListeners != null && !foundListeners.isEmpty())
+					{
+						// loop through them
+						for (POVListenerCallback callback : foundListeners)
+						{
+							callback.onListener(newPOVEntry.getValue());
+						}
+					}
+				}
+			}
+	
+
+	
+			// invoke generic handlers, once they've been merged.
+			for (TypelessListenerCallback listener : genericListenersToInvoke)
+			{
+				listener.onListener();
 			}
 		}
 		
-		//don't need to lock _controlValuesMutex here because we know it's not going to be modified, because we're the only ones modifying it
-
-		//check for pressed buttons
-		for(Button button : newValues.buttonValues)
+		//we invoke the listeners at the bottom of each of those nested loops, andit's impractical to repeat the catch block 5 times
+		//so we just have to put the whole thing in the catch block.
+		catch (RuntimeException error) 
 		{
-			if(!currentControls.buttonValues.contains(button))
-			{
-				addListenersForControl(listenersToInvoke, new Button(button.getCode(), false));
-			}
-		}
-		
-		//check for unpressed buttons
-		for(Button button : currentControls.buttonValues)
-		{
-			if(!newValues.buttonValues.contains(button))
-			{
-				addListenersForControl(listenersToInvoke, new Button(button.getCode(), true));
-			}
-		}
-
-		// loop through joystick values
-		for (Axis axis : newValues.joystickValues.keySet())
-		{
-			// has this particular value changed?
-			if (Math.abs(currentControls.joystickValues.get(axis) - newValues.joystickValues.get(axis)) > .0001) //TODO there was an NPE here while practicing.  Investigate!
-			{
-				addListenersForControl(listenersToInvoke, axis);
-
-			}
-		}
-		
-		for(POV oldPOVValue : currentControls.povValues)
-		{
-			if(oldPOVValue.getIndexOnJoystick() >= newValues.povValues.size())
-			{
-				break;
-			}
-			POV newPOVValue = newValues.povValues.get(oldPOVValue.getIndexOnJoystick());
-			if(!newPOVValue.equals(oldPOVValue))
-			{
-				addListenersForControl(listenersToInvoke, newPOVValue);
-			}
-		}
-
-		// update class variables to match new data
-		{
-			_controlValuesMutex.lock();
-			currentControls = newValues;
-			_controlValuesMutex.unlock();
-		}
-
-		// invoke handlers
-		for (IListenerCallback listener : listenersToInvoke)
-		{
-			try
-			{
-				listener.listenerCallback();
-			} 
-			catch (RuntimeException error)
-			{
-				Log.recoverable(
-						"ListenerManager",
-						"Caught a " + error.getClass().getSimpleName()
-								+ " from a control listener: "
-								+ error.getMessage());
-				error.printStackTrace();
-			}
+			Log.recoverable(
+					"ControlWatcher",
+					"Caught a " + error.getClass().getSimpleName()
+							+ " from a control listener: "
+							+ error.getMessage());
+			error.printStackTrace();
 		}
 
 	}
@@ -412,6 +571,9 @@ public class ListenerManager
 
 		numPOVs = joyToTest.getPOVCount() - 1;
 		_controlValuesMutex.unlock();
+		
+		//remake the controls arrays with the correct length
+		currentControls = pollAllJoysticks();
 	}
 
 }

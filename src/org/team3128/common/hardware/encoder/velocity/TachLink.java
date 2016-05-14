@@ -94,7 +94,7 @@ public class TachLink implements IVelocityEncoder
 	 * Time-wise, this is a relatively expensive operation, so don't call this function unnecessarily.
 	 */
 	@Override
-	public double getSpeedInRPM()
+	public double getAngularSpeed()
 	{
 		int rawValue = getRaw();
 		

@@ -2,7 +2,7 @@ package org.team3128.testmainclasses;
 
 import org.team3128.common.hardware.misc.Piston;
 import org.team3128.common.listener.ListenerManager;
-import org.team3128.common.listener.controller.ControllerXbox;
+import org.team3128.common.listener.controllers.ControllerXbox;
 import org.team3128.common.multibot.MainClass;
 import org.team3128.common.multibot.RobotTemplate;
 import org.team3128.common.util.GenericSendableChooser;
@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 public class MainPneumaticsTest extends MainClass
 {
 	
-	public ListenerManager listenerManagerExtreme;
+	public ListenerManager lmExtreme;
 	
 	public Piston testPiston;
 	
@@ -23,7 +23,7 @@ public class MainPneumaticsTest extends MainClass
 	
 	public MainPneumaticsTest()
 	{	
-		listenerManagerExtreme = new ListenerManager(new Joystick(0));	
+		lmExtreme = new ListenerManager(new Joystick(0));	
 		
 		testPiston = new Piston(new Solenoid(0), new Solenoid(1));
 		testPiston.invertPiston();
@@ -34,8 +34,23 @@ public class MainPneumaticsTest extends MainClass
 
 	protected void initializeRobot(RobotTemplate robotTemplate)
 	{	
-		robotTemplate.addListenerManager(listenerManagerExtreme);
+		robotTemplate.addListenerManager(lmExtreme);
 		testPiston.setPistonOff();
+		
+		lmExtreme.nameControl(ControllerXbox.A, "PistonExtend");
+		lmExtreme.nameControl(ControllerXbox.B, "PistonRetract");
+
+		lmExtreme.nameControl(ControllerXbox.LB, "CompressorOn");
+		lmExtreme.nameControl(ControllerXbox.RB, "CompressorOff");
+
+		
+		testPiston.unlockPiston();
+	
+		
+		lmExtreme.addButtonDownListener("PistonExtend", () -> testPiston.setPistonOn());
+
+		lmExtreme.addButtonDownListener("CompressorOn", () -> compressor.start());
+		lmExtreme.addButtonDownListener("CompressorOff", () -> compressor.stop());
 	}
 
 	protected void initializeDisabled()
@@ -48,14 +63,8 @@ public class MainPneumaticsTest extends MainClass
 	
 	protected void initializeTeleop()
 	{	
-		testPiston.unlockPiston();
 		
-		listenerManagerExtreme.addListener(ControllerXbox.ADOWN, () -> testPiston.setPistonOn());
-		
-		listenerManagerExtreme.addListener(ControllerXbox.BDOWN, () -> testPiston.setPistonOff());
-		
-		listenerManagerExtreme.addListener(ControllerXbox.LBDOWN, () -> compressor.stop());
-		listenerManagerExtreme.addListener(ControllerXbox.RBDOWN, () -> compressor.start());
+
 
 	}
 

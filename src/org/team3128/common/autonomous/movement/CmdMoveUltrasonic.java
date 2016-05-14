@@ -132,7 +132,7 @@ public class CmdMoveUltrasonic extends Command {
         	output = RobotMath.sgn(output) * OUTPUT_POWER_LIMIT;
         }
         
-        output = RobotMath.clampDouble(output, -OUTPUT_POWER_LIMIT, OUTPUT_POWER_LIMIT);
+        output = RobotMath.clamp(output, -OUTPUT_POWER_LIMIT, OUTPUT_POWER_LIMIT);
         
         
         prevError = error;
