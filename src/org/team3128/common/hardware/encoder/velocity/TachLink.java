@@ -2,7 +2,7 @@ package org.team3128.common.hardware.encoder.velocity;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.team3128.common.multibot.RobotProperties;
+import org.team3128.common.RobotProperties;
 
 import edu.wpi.first.wpilibj.I2C;
 

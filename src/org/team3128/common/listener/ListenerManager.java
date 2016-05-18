@@ -559,7 +559,7 @@ public class ListenerManager
 	 * Under certain conditions, such as when the roborio first boots up, Joystick.getNumButtons() (and possibly the other two such functions)
 	 * can return bad data.  Call this function at a later time after the robot has a connection to re-get the correct values.
 	 * 
-	 * (called automatically by RobotTemplate)
+	 * (called automatically by NarwhalRobot)
 	 */
 	public void recountControls()
 	{
