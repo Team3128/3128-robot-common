@@ -7,7 +7,6 @@ import org.team3128.common.listener.controllers.ControllerXbox;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Solenoid;
 
 public class MainPneumaticsTest extends NarwhalRobot
 {
@@ -23,7 +22,7 @@ public class MainPneumaticsTest extends NarwhalRobot
 	{
 		lmExtreme = new ListenerManager(new Joystick(0));	
 		
-		testPiston = new Piston(new Solenoid(0), new Solenoid(1));
+		testPiston = new Piston(0, 1);
 		testPiston.invertPiston();
 		
 		compressor = new Compressor();

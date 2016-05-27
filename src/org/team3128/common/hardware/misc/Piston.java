@@ -13,17 +13,24 @@ import edu.wpi.first.wpilibj.Solenoid;
 public class Piston 
 {
     private final Solenoid solA, solB;
+    
+    private final String logTag;
+    
     private boolean isInverted = false;
    
-    public Piston(Solenoid solA, Solenoid solB)
+    public Piston(int solAChannel, int solBChannel)
     {
-        this.solA = solA; this.solB = solB;
+        this(solAChannel, solBChannel, false, false);
     }
    
-    public Piston(Solenoid solA, Solenoid solB, boolean solStateA, boolean solStateB)
+    public Piston(int solAChannel, int solBChannel, boolean solStateA, boolean solStateB)
     {
-        this(solA, solB);
+        this.solA = new Solenoid(solAChannel); 
+        this.solB = new Solenoid(solBChannel);
+        
         solA.set(solStateA); solB.set(solStateB);
+        
+        logTag = String.format("Piston(%d, %d)", solAChannel, solBChannel);
     }
    
     public void invertPiston() {this.isInverted = !isInverted;}
@@ -32,28 +39,28 @@ public class Piston
     {
         solA.set(true);
         solB.set(true);
-        Log.debug("Piston"," set to locked state");
+        Log.debug(logTag," set to locked state");
     }
 
     public void unlockPiston() 
     {
         solA.set(false);
         solB.set(false);
-        Log.debug("Piston", " set to unlocked state");
+        Log.debug(logTag, " set to unlocked state");
     }
    
     public void setPistonOn()
     {
         solA.set(true ^ this.isInverted);
         solB.set(false ^ this.isInverted);
-        Log.debug("Piston", " set to on state");
+        Log.debug(logTag, " set to on state");
     }
    
     public void setPistonOff() 
     {
         solA.set(false ^ this.isInverted);
         solB.set(true ^ this.isInverted);
-        //Log.debug("Piston", " set to off state");
+        Log.debug(logTag, " set to off state");
     }
    
     /**
@@ -63,7 +70,7 @@ public class Piston
     {
         solA.set(!solA.get());
         solB.set(!solB.get());
-        Log.debug("Piston", " set to flip-state " + solA.get() + ", " +solB.get());
+        Log.debug(logTag, " set to flip-state " + solA.get() + ", " +solB.get());
     }
 
 }

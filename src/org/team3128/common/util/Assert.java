@@ -25,6 +25,22 @@ public class Assert
 		}
 	}
 	
+	public static void that(boolean condition, String failureMessage)
+	{
+		if(!condition)
+		{
+			assertFail(failureMessage);
+		}
+	}
+	
+	/**
+	 * Call this to kill the robot and print the given message as the cause
+	 */
+	public static void fail(String message)
+	{
+		assertFail(message);
+	}
+	
 	public static void isNull(Object object)
 	{
 		if(object != null)

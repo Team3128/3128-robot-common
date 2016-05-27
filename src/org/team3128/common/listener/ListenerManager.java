@@ -16,6 +16,7 @@ import org.team3128.common.listener.controltypes.Axis;
 import org.team3128.common.listener.controltypes.Button;
 import org.team3128.common.listener.controltypes.Control;
 import org.team3128.common.listener.controltypes.POV;
+import org.team3128.common.util.Assert;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.Pair;
@@ -137,7 +138,7 @@ public class ListenerManager
 	 */
 	public void addListener(String name, TypelessListenerCallback listener)
 	{
-		checkControlName(name);
+		checkControlName(name, null);
 
 		genericListeners.put(controlNames.get(name), listener);
 	}
@@ -147,7 +148,7 @@ public class ListenerManager
 	 */
 	public void addListener(String name, POVListenerCallback listener)
 	{
-		checkControlName(name);
+		checkControlName(name, POV.class);
 
 		povListeners.put(controlNames.get(name), listener);
 	}
@@ -157,7 +158,7 @@ public class ListenerManager
 	 */
 	public void addButtonDownListener(String name, TypelessListenerCallback listener)
 	{
-		checkControlName(name);
+		checkControlName(name, Button.class);
 
 		buttonListeners.put(controlNames.get(name), new Pair<>(listener, true));
 	}
@@ -167,7 +168,7 @@ public class ListenerManager
 	 */
 	public void addButtonUpListener(String name, TypelessListenerCallback listener)
 	{
-		checkControlName(name);
+		checkControlName(name, Button.class);
 
 		buttonListeners.put(controlNames.get(name), new Pair<>(listener, false));
 	}
@@ -180,19 +181,27 @@ public class ListenerManager
 	 */
 	public void addListener(String name, AxisListenerCallback listener)
 	{
-		checkControlName(name);
+		checkControlName(name, Axis.class);
 
 		axisListeners.put(controlNames.get(name), listener);
 	}
 	
 	/**
-	 * Throw an IllegalArgumentException if the control name is invalid.
+	 * Fail if the control name is invalid.
+	 * 
+	 * We can assert here, because this mistake is a coding problem and needs to be fixed right away..
 	 */
-	private void checkControlName(String name)
+	private void checkControlName(String name, Class<? extends Control> controlType)
 	{
-		if(!controlNames.containsKey(name))
+		Assert.notNull(name);
+		
+		Assert.that(controlNames.containsKey(name), "Unknown control name \"" + name +'\"');
+		
+		Control namedControl = controlNames.get(name);
+		
+		if(!(controlType == null || controlType.isInstance(namedControl)))
 		{
-			throw new IllegalArgumentException("Unknown control name \"" + name +'\"');
+			Assert.fail("Tried to use \"" + name + "\" as an " + controlType.getSimpleName() + ", but that name is registered to a(n) " + namedControl.getClass().getSimpleName()); 
 		}
 	}
 	
@@ -207,7 +216,7 @@ public class ListenerManager
 		
 		for(String controlName : names)
 		{
-			checkControlName(controlName);
+			checkControlName(controlName, null);
 			
 			genericListeners.put(controlNames.get(controlName), listener);
 
@@ -248,7 +257,7 @@ public class ListenerManager
 	 */
 	public boolean getButton(String name)
 	{
-		checkControlName(name);
+		checkControlName(name, Button.class);
 		
 		_controlValuesMutex.lock();
 		
@@ -272,7 +281,7 @@ public class ListenerManager
 	 */
 	public double getAxis(String name)
 	{
-		checkControlName(name);
+		checkControlName(name, Axis.class);
 		
 		_controlValuesMutex.lock();
 		double retval = 0.0;
@@ -298,7 +307,7 @@ public class ListenerManager
 	 */
 	public POVValue getPOV(String name)
 	{
-		checkControlName(name);
+		checkControlName(name, POV.class);
 		
 		_controlValuesMutex.lock();
 		POVValue retval = null;

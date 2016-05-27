@@ -127,7 +127,7 @@ public abstract class NarwhalRobot extends RobotBase
 
         // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         
-        Log.info("NarwhalRobot", "Welcome to the FRC Team 3128 Common Library version 3.2!");
+        Log.info("NarwhalRobot", "Welcome to the FRC Team 3128 Common Library version 3.2b!");
         Log.info("NarwhalRobot", "Initializing Base Robot...");
 	    
         Assert.setRobot(this);
@@ -139,6 +139,7 @@ public abstract class NarwhalRobot extends RobotBase
         catch(RuntimeException ex)
         {
         	Log.fatalException("NarwhalRobot", "Exception constructing hardware", ex);
+        	ex.printStackTrace();
         	fail();
         }
         
@@ -149,6 +150,7 @@ public abstract class NarwhalRobot extends RobotBase
         catch(RuntimeException ex)
         {
         	Log.fatalException("NarwhalRobot", "Exception seting up listeners", ex);
+        	ex.printStackTrace();
         	fail();
         }
         
