@@ -3,6 +3,7 @@ package org.team3128.common;
 import java.util.ArrayList;
 
 import org.team3128.common.listener.ListenerManager;
+import org.team3128.common.util.Assert;
 import org.team3128.common.util.GenericSendableChooser;
 import org.team3128.common.util.Log;
 
@@ -129,6 +130,8 @@ public abstract class NarwhalRobot extends RobotBase
         Log.info("NarwhalRobot", "Welcome to the FRC Team 3128 Common Library version 3.2!");
         Log.info("NarwhalRobot", "Initializing Base Robot...");
 	    
+        Assert.setRobot(this);
+        
         try
         {
         	constructHardware();
@@ -165,7 +168,12 @@ public abstract class NarwhalRobot extends RobotBase
         FRCNetworkCommunicationsLibrary.FRCNetworkCommunicationObserveUserProgramStarting();
         // loop forever, calling the appropriate mode-dependent function
         
+        long lastLoopStartTime;
+        
 		while (true) {
+			
+			lastLoopStartTime = System.currentTimeMillis();
+			
 			// Call the appropriate function depending upon the current robot mode
 			if (isDisabled()) {
 				// call DisabledInit() if we are now just entering disabled mode from
@@ -261,6 +269,14 @@ public abstract class NarwhalRobot extends RobotBase
 			{
 				m_ds.waitForData();
 			}
+			
+			if(teleopInitialized && !isOperatorControl())
+			{
+				//cancel the driver's last inputs to motors and such, so the robot doesn't react suddenly when reenabled.
+				zeroOutListeners();
+			}
+			
+	    	//Log.debug("NarwhalRobot", "Main loop took " + (System.currentTimeMillis() - lastLoopStartTime) + " ms.");
 		}
 	}
 	
@@ -383,15 +399,21 @@ public abstract class NarwhalRobot extends RobotBase
     // DO YOU REALLY WANT TO MODIFY YOUR SOUL?
     public void tickListenerManagers()
     {        
-    	long startTime = System.currentTimeMillis();
     	
     	for(ListenerManager manager : listenerManagers)
     	{
     		manager.tick();
     	}
-    	
-    	Log.debug("NarwhalRobot", "ListenerManager ticking took " + (System.currentTimeMillis() - startTime) + " ms.");
     }
     
+    //update all listeners with zero / unpressed values for all controls
+    //this stops the robot from immediately moving when enabled if it was stopped when it was disabled.
+    public void zeroOutListeners()
+    {
+    	for(ListenerManager manager : listenerManagers)
+    	{
+    		manager.zeroOutListeners();
+    	}
+    }
 }
 

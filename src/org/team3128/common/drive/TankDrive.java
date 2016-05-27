@@ -6,6 +6,7 @@ import org.team3128.common.autonomous.AutoUtils;
 import org.team3128.common.hardware.encoder.distance.IDistanceEncoder;
 import org.team3128.common.hardware.encoder.velocity.QuadratureEncoderLink;
 import org.team3128.common.hardware.motor.MotorGroup;
+import org.team3128.common.util.Assert;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.enums.Direction;
@@ -95,6 +96,8 @@ public class TankDrive
 	 */
     public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
     {
+    	
+    	Assert.that(!fullSpeed);
     	
         double spdL, spdR;
     	//read joystick values

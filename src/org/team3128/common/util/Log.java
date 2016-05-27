@@ -42,7 +42,7 @@ public class Log
 	{
 		log("Recoverable", category, message);
 		
-		DriverStation.reportError("Error: " + message, true);
+		DriverStation.reportError("Error: " + (message == null ? "null" : message), true);
 
 	}
 	

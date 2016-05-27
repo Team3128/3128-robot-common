@@ -83,6 +83,8 @@ public class ListenerManager
 	//one indexed
 	private int numButtons;
 
+	private static final String LOG_TAG = "ListenerManager";
+	
 	/**
 	 * Construct a ListenerManager from joysticks and their type
 	 * @param controlType
@@ -274,8 +276,13 @@ public class ListenerManager
 		
 		_controlValuesMutex.lock();
 		double retval = 0.0;
-
-		retval = currentControls.joystickValues.get(controlNames.get(name));
+		
+		Control axis = controlNames.get(name);
+		
+		if(currentControls.joystickValues.containsKey(axis))
+		{
+			retval = currentControls.joystickValues.get(axis);
+		}
 		
 		_controlValuesMutex.unlock();
 		return retval;
@@ -326,6 +333,8 @@ public class ListenerManager
 					newControls.buttonValues.add(new Button(counter));
 				}
 			}
+			
+			//Log.debug(LOG_TAG, "Buttons: " + newControls.buttonValues.toString());
 
 			// read joystick values
 			for (int counter = 0; counter <= numAxes; counter++)
@@ -389,23 +398,37 @@ public class ListenerManager
 	public void tick()
 	{
 		ControlValues newControls = pollAllJoysticks();
+			
+		//don't need to lock _controlValuesMutex here because we know it's not going to be modified, because we're the only ones modifying it
+
+		//save the old controls and swap in the new ones, so that if/when listeners check they will get the new data
+		ControlValues oldControls = currentControls;
+		
+		// update class variables to match new data
+		{
+			_controlValuesMutex.lock();
+			currentControls = newControls;
+			_controlValuesMutex.unlock();
+		}
+		
+		invokeListeners(oldControls, newControls);
+
+	}
+	
+	/**
+	 * fire all the listeners for changed control values, based on the provided old and new values.
+	 * 
+	 * Does exception handling.
+	 * @param oldControls
+	 * @param newControls
+	 */
+	private void invokeListeners(ControlValues oldControls, ControlValues newControls)
+	{
 		try
-		{		
+		{
 			//if the same generic listener is registered for multiple types of control, we need to execute it only once
 			//so we collect all of the generic listeners to execute in here to de-duplicate them.
 			Set<TypelessListenerCallback> genericListenersToInvoke = new HashSet<TypelessListenerCallback>();
-			
-			//don't need to lock _controlValuesMutex here because we know it's not going to be modified, because we're the only ones modifying it
-	
-			//save the old controls and swap in the new ones, so that if/when listeners check they will get the new data
-			ControlValues oldControls = currentControls;
-			
-			// update class variables to match new data
-			{
-				_controlValuesMutex.lock();
-				currentControls = newControls;
-				_controlValuesMutex.unlock();
-			}
 			
 			//buttons
 			//--------------------------------------------------------------------------------------------------------------------------------------------------
@@ -514,7 +537,7 @@ public class ListenerManager
 				}
 			}
 	
-
+	
 	
 			// invoke generic handlers, once they've been merged.
 			for (TypelessListenerCallback listener : genericListenersToInvoke)
@@ -534,7 +557,6 @@ public class ListenerManager
 							+ error.getMessage());
 			error.printStackTrace();
 		}
-
 	}
 	
 	/**
@@ -557,7 +579,8 @@ public class ListenerManager
 	
 	/**
 	 * Under certain conditions, such as when the roborio first boots up, Joystick.getNumButtons() (and possibly the other two such functions)
-	 * can return bad data.  Call this function at a later time after the robot has a connection to re-get the correct values.
+	 * can return bad data because WPILib has NO FRIGGIN' IDEA how many buttons are on the joystick until it connects to the Driver Station.
+	 * Call this function at a later time after the robot has a connection to re-get the correct values.
 	 * 
 	 * (called automatically by NarwhalRobot)
 	 */
@@ -574,6 +597,39 @@ public class ListenerManager
 		
 		//remake the controls arrays with the correct length
 		currentControls = pollAllJoysticks();
+		
+		Log.info(LOG_TAG, String.format("Joystick: %d buttons, %d axes, %d POVs",  numButtons, numAxes + 1, numPOVs + 1));
+	}
+	
+	/**
+	 * Update all listeners, and the stored control values, as if all of the controls had gone back to their zeroed / rest state.
+	 * 
+	 * Button-unpressed listeners are fired, and axis and POV listeners are updated that their control has gone to zero.
+	 */
+	public void zeroOutListeners()
+	{
+		ControlValues allZeroValues = new ControlValues();
+		
+		for(int axisIndex = 0; axisIndex <= numAxes; ++axisIndex)
+		{
+			allZeroValues.joystickValues.put(new Axis(axisIndex), 0.0);
+		}
+		
+		for(int povIndex = 0; povIndex <= numPOVs; ++povIndex)
+		{
+			allZeroValues.povValues.put(new POV(povIndex), new POVValue(0));
+		}
+		
+		//save the old controls and swap in the new ones, so that if/when listeners check they will get the new data
+		ControlValues oldControls = currentControls;
+		
+		{
+			_controlValuesMutex.lock();
+			currentControls = allZeroValues;
+			_controlValuesMutex.unlock();
+		}
+		
+		invokeListeners(oldControls, allZeroValues);
 	}
 
 }
