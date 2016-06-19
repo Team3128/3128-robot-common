@@ -14,6 +14,9 @@ public class AutoUtils
 
 
 	/**
+	 * 
+	 * Stops the autonomous program while still allowing the teleop to run normally once teleop starts
+	 * 
 	 * Things that call this should stop any motors that were running first!
 	 * @param cause
 	 */
@@ -28,7 +31,4 @@ public class AutoUtils
 		//BAD, KILLS ROBOT
 		//throw new RuntimeException("Error in automatic movement - " + cause + "\nRobot shut down!");
 	}
-
-	public static final double speedMultiplier = 1;
-
 }
