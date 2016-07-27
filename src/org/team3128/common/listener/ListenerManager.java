@@ -330,12 +330,16 @@ public class ListenerManager
 		// loop through joystick values
 		for (Axis axis : newValues.joystickValues.keySet())
 		{
-			// has this particular value changed?
-			if (Math.abs(currentControls.joystickValues.get(axis) - newValues.joystickValues.get(axis)) > .0001) //TODO there was an NPE here while practicing.  Investigate!
+			if(currentControls.joystickValues.containsKey(axis))
 			{
-				addListenersForControl(listenersToInvoke, axis);
+				// has this particular value changed?
+				if (Math.abs(currentControls.joystickValues.get(axis) - newValues.joystickValues.get(axis)) > .0001)
+				{
+					addListenersForControl(listenersToInvoke, axis);
 
+				}
 			}
+
 		}
 		
 		for(POV oldPOVValue : currentControls.povValues)
