@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj.SpeedController;
 /**
  * MotorGroup is the class used in this code to represent a motor or several linked ones.
  * It can operate with several
- * different varieties of motor control to use logic to control its speed, or none at all.
+ * different varieties of motor logic to control its speed, or none at all.
  */
 public class MotorGroup 
 {

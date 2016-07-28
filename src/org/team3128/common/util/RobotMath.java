@@ -154,7 +154,7 @@ public class RobotMath {
 	 * @param threshold
 	 * @return
 	 */
-	public static float thresh(float value, float threshold)
+	public static float threshold(float value, float threshold)
 	{
 		if(Math.abs(value) < Math.abs(threshold))
 		{
