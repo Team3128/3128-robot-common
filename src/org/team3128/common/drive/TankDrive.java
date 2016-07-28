@@ -76,7 +76,7 @@ public class TankDrive
      * @param wheelCircumfrence The circumference of the wheel
      * @param gearRatio The gear ratio of the turns of the wheels per turn of the encoder shaft
      * @param wheelBase The distance between the front and back wheel on a side
-     * @param track 
+     * @param track distance between front and back wheels
      */
     public TankDrive(MotorGroup leftMotors, MotorGroup rightMotors, QuadratureEncoderLink encLeft, QuadratureEncoderLink encRight, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
     {

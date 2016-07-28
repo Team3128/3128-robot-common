@@ -70,7 +70,6 @@ public class CmdMoveUltrasonic extends Command {
     	
     	_threshold = threshold;
     	
-    	this.drivetrain = drivetrain;
     	this.ultrasonic = ultrasonic;
     	this.pidConstants = pidConstants;
     	this.drivetrain = drivetrain;

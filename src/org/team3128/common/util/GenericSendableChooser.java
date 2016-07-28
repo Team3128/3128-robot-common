@@ -157,6 +157,14 @@ public class GenericSendableChooser<T> implements Sendable {
    */
   public int getLength()
   {
-	  return values.size();
+	  int size = values.size();
+	  
+	  //the default choice is not included in values
+	  if(defaultChoice != null)
+	  {
+		  ++size;
+	  }
+	  
+	  return size;
   }
 }
