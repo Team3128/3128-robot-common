@@ -272,7 +272,7 @@ public class RobotMath {
 	 * Throws if the argument can't fit in an int.
 	 * @param d
 	 */
-	public static int intRound(double d)
+	public static int round(double d)
 	{
 		long roundedLong = Math.round(d);
 		
