@@ -609,7 +609,7 @@ public class TankDrive
     		if(_msec != 0 && (timeSinceInitialized() * 1000) >_msec)
     		{
     			stopMovement();
-    			AutoUtils.killRobot("Move Overtime");
+    			// AutoUtils.killRobot("Move Overtime");
     		}
         }
 
@@ -641,7 +641,7 @@ public class TankDrive
         // subsystems is scheduled to run
         protected void interrupted()
         {
-        	
+        	end();
         }
     }
     
