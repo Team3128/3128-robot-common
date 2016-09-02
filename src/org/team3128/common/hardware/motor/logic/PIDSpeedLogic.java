@@ -5,6 +5,7 @@ import org.team3128.common.hardware.motor.MotorLogic;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.VelocityPID;
+import org.team3128.common.util.datatypes.PIDConstants;
 
 /*        _
  *       / \ 
@@ -36,6 +37,7 @@ public class PIDSpeedLogic extends MotorLogic
      * Target speed in RPM.
      */
     protected double _targetSpeed;
+    
 
     /**
      *
@@ -46,12 +48,12 @@ public class PIDSpeedLogic extends MotorLogic
      * @param kI the Konstant of Integral
      * @param kD the Konstant of Derivative
      */
-    public PIDSpeedLogic(double tgtSpeed, int refreshTime, IVelocityEncoder encoder, double kP, double kI, double kD)
+    public PIDSpeedLogic(double tgtSpeed, int refreshTime, IVelocityEncoder encoder, PIDConstants pidConstants)
     {
     	_targetSpeed = tgtSpeed;
         _refreshTime = refreshTime;
         _encoder = encoder;
-        _pidCalculator = new VelocityPID(kP, kI, kD);
+        _pidCalculator = new VelocityPID(pidConstants);
         _pidCalculator.setDesiredVelocity(tgtSpeed);
     }
    
@@ -77,15 +79,14 @@ public class PIDSpeedLogic extends MotorLogic
     @Override
     public double speedControlStep(double dt)
     {
-    	
-    	double speed = -1 * _encoder.getSpeedInRPM();
+    	double speed = -1 * _encoder.getAngularSpeed();
     	if(Math.abs(speed) < 5.0)
     	{
     		speed = 0;
     	}
         _pidCalculator.update(speed);
         
-        double output = RobotMath.makeValidPower(RobotMath.getEstCIMPowerForRPM(_targetSpeed + _pidCalculator.getOutputAddition()));
+        double output = RobotMath.clampPosNeg1(_pidCalculator.getOutput());
         
         Log.debug("PIDSpeedLogic", "Current RPM: " + speed + " Output: " + output);
         

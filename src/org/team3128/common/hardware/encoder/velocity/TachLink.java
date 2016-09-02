@@ -2,7 +2,7 @@ package org.team3128.common.hardware.encoder.velocity;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.team3128.common.multibot.RobotProperties;
+import org.team3128.common.RobotProperties;
 
 import edu.wpi.first.wpilibj.I2C;
 
@@ -94,7 +94,7 @@ public class TachLink implements IVelocityEncoder
 	 * Time-wise, this is a relatively expensive operation, so don't call this function unnecessarily.
 	 */
 	@Override
-	public double getSpeedInRPM()
+	public double getAngularSpeed()
 	{
 		int rawValue = getRaw();
 		

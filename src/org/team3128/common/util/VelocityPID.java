@@ -1,5 +1,7 @@
 package org.team3128.common.util;
 
+import org.team3128.common.util.datatypes.PIDConstants;
+
 
 public class VelocityPID
 {
@@ -8,21 +10,15 @@ public class VelocityPID
 	
 	double errorSum = 0;
 	
-	double Kp;
-	
-	double Ki;
-	
-	double Kd;
+	PIDConstants pidConstants;
 	
 	double desiredVelocity;
 	
-	double storedVelocityAddition;
+	double storedOutput;
 	
-	public VelocityPID(double Pconstant, double Iconstant, double Dconstant)
+	public VelocityPID(PIDConstants pidConstants)
 	{
-		Kp = Pconstant;
-		Ki = Iconstant;
-		Kd = Dconstant;
+		this.pidConstants = pidConstants;
 	}
 	
 	public void setDesiredVelocity(double velocity)
@@ -49,21 +45,22 @@ public class VelocityPID
 		
 		errorSum += error;
 		
-		double errorDelta = error - lastVelocityError;
+		double errorDerivative = error - lastVelocityError;
 		
-		storedVelocityAddition = (Kp * error) + (Ki * errorSum) + (Kd * errorDelta);
+		storedOutput = (pidConstants.kP * error) + (pidConstants.kI * errorSum) + (pidConstants.kD * errorDerivative) + storedOutput;
 		
 		lastVelocityError = error;
+		
 	}
 	
 	/**
 	 * 
-	 * @return The number to add to the current control output to apply the PID correction.
+	 * @return The number to output to apply the PID correction.
 	 * 
 	 * This function does not do any calculating, you have to call update() first
 	 */
-	public double getOutputAddition()
+	public double getOutput()
 	{
-		return storedVelocityAddition;
+		return storedOutput;
 	}
 }

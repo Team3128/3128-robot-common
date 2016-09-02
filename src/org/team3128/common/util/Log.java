@@ -18,6 +18,22 @@ public class Log
 	}
 	
 	/**
+	 * Log a FATAL error due to an exception, after which the robot cannot (properly) function. <br>
+	 * Prints your message, and the exception's name, message, and stacktrace.
+
+	 */
+	public static void fatalException(String category, String userMessage, Exception exception)
+	{
+		String exceptionMessage = String.format("%s -- %s: %s", userMessage, exception.getClass().getSimpleName(), exception.getMessage());
+		log("Fatal", category, exceptionMessage);
+		
+		exception.printStackTrace();
+		
+		//make it show up on the DS as well
+		DriverStation.reportError("Fatal Error: " + exceptionMessage, true);
+	}
+	
+	/**
 	 * Log a failure which may kill one function or one thread, however the robot as a whole can keep functioning.
 	 * @param category
 	 * @param message
@@ -26,7 +42,7 @@ public class Log
 	{
 		log("Recoverable", category, message);
 		
-		DriverStation.reportError("Error: " + message, true);
+		DriverStation.reportError("Error: " + (message == null ? "null" : message), true);
 
 	}
 	

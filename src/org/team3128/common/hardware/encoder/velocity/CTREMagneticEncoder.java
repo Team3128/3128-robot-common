@@ -44,10 +44,10 @@ public class CTREMagneticEncoder implements IVelocityEncoder, IDistanceEncoder,
 	 * @param inverted
 	 *            whether or not the encoder is inverted
 	 */
-	public CTREMagneticEncoder(int dataAPort, int dataBPort, int pwmPort, double pulsesPerRevolution, boolean inverted) 
+	public CTREMagneticEncoder(int dataAPort, int dataBPort, int pwmPort, boolean inverted) 
 	{
 		encoder = new Encoder(dataAPort, dataBPort);
-		encoder.setDistancePerPulse(360/pulsesPerRevolution);
+		encoder.setDistancePerPulse(360.0/PULSES_PER_REVOLUTION);
 		
 		pwmCounter = new Counter(pwmPort);
 		pwmCounter.setSemiPeriodMode(true); //only count rising edges
@@ -67,7 +67,7 @@ public class CTREMagneticEncoder implements IVelocityEncoder, IDistanceEncoder,
 	}
 
 	@Override
-	public double getSpeedInRPM()
+	public double getAngularSpeed()
 	{
 
 		// getRate returns rotations / second

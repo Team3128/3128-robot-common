@@ -120,7 +120,7 @@ public class MotorGroup
     
     /**
      * Set the speed controller object that this motor should use. <br>
-     * If null is passed, no speed control will be set.
+     * If null is passed, no speed control will be set and the target value will be used as the motor power.
      * @param motorLogic
      */
     public void setSpeedController(MotorLogic spdControl)

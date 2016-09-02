@@ -85,7 +85,7 @@ public class AbsolutePIDAngleLogic extends MotorLogic
     		//errorSum = -errorLimit;
     	}
     	
-        double output = error * kP + errorSum * kI + kD * (error - prevError);
+        double output = error * kP + errorSum * kI + kD * (error - prevError) / dt;
         
         prevError = error;
         
@@ -101,7 +101,7 @@ public class AbsolutePIDAngleLogic extends MotorLogic
         }
         consecutiveCorrectPositions = 0;
         
-        return RobotMath.makeValidPower(output);
+        return RobotMath.clampPosNeg1(output);
     }
 
     @Override
