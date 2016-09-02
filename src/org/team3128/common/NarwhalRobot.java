@@ -190,7 +190,12 @@ public abstract class NarwhalRobot extends RobotBase
 						setupAutoChooser();
 					}
 					
+					//cancel the last inputs to motors and such, so the robot doesn't react suddenly when reenabled.
+					zeroOutListeners();
+					
+					
 					disabledInit();
+					
 					disabledInitialized = true;
 					// reset the initialization flags for the other modes
 					autonomousInitialized = false;
@@ -227,6 +232,9 @@ public abstract class NarwhalRobot extends RobotBase
 					
 			        Log.info("NarwhalRobot", "Initializing Autonomous...");
 			        
+					//cancel the last inputs to motors and such, so the robot doesn't react suddenly when reenabled.
+					zeroOutListeners();
+			        
 					autonomousInit(); //we probably want to call this first, as it may set preconditions for autonomous
 					runAutoProgram(); 
 					autonomousInitialized = true;
@@ -250,6 +258,9 @@ public abstract class NarwhalRobot extends RobotBase
 					
 			        Log.info("NarwhalRobot", "Initializing Teleop...");
 					
+					//cancel the last inputs to motors and such, so the robot doesn't react suddenly when reenabled.
+					zeroOutListeners();
+					
 					teleopInit();
 					recountAllControls();
 					teleopInitialized = true;
@@ -272,11 +283,6 @@ public abstract class NarwhalRobot extends RobotBase
 				m_ds.waitForData();
 			}
 			
-			if(teleopInitialized && !isOperatorControl())
-			{
-				//cancel the driver's last inputs to motors and such, so the robot doesn't react suddenly when reenabled.
-				zeroOutListeners();
-			}
 			
 	    	//Log.debug("NarwhalRobot", "Main loop took " + (System.currentTimeMillis() - lastLoopStartTime) + " ms.");
 		}

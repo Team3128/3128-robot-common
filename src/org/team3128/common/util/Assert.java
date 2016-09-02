@@ -2,6 +2,8 @@ package org.team3128.common.util;
 
 import org.team3128.common.NarwhalRobot;
 
+import edu.wpi.first.wpilibj.DriverStation;
+
 public class Assert
 {
 	private static NarwhalRobot robot;
@@ -66,7 +68,7 @@ public class Assert
 	}
 	
 	/**
-	 * Assert that the argument is positive.  0 is also valid.
+	 * Assert that the argument is positive or 0.
 	 */
 	public static void positive(long number)
 	{
@@ -77,11 +79,33 @@ public class Assert
 	}
 	
 	/**
-	 * Assert that the argument is negative.  0 is also valid.
+	 * Assert that the argument is positive or 0.
+	 */
+	public static void positive(double number)
+	{
+		if(number < 0)
+		{
+			assertFail(String.format("Should be positive, but is actually %d", number));
+		}
+	}
+	
+	/**
+	 * Assert that the argument is negative.  0 is NOT a valid value.
 	 */
 	public static void negative(long number)
 	{
-		if(number < 0)
+		if(number >= 0)
+		{
+			assertFail(String.format("Should be negative, but is actually %d", number));
+		}
+	}
+	
+	/**
+	 * Assert that the argument is negative.  0 is NOT a valid value.
+	 */
+	public static void negative(double number)
+	{
+		if(number >= 0)
 		{
 			assertFail(String.format("Should be negative, but is actually %d", number));
 		}
@@ -97,7 +121,7 @@ public class Assert
 	{
 		if(min > max)
 		{
-			assertFail("Argument error: Minumum is greater than maximum");
+			assertFail("Assert argument error: Minumum is greater than maximum");
 		}
 		
 		if(number < min || number > max)
@@ -110,12 +134,20 @@ public class Assert
 	{
 		if(min > max)
 		{
-			assertFail("Argument error: Minumum is greater than maximum");
+			assertFail("Assert argument error: Minumum is greater than maximum");
 		}
 		
 		if(number < min || number > max)
 		{
 			assertFail(String.format("Should be between %.03f and %.03f, but actually is %.03f!", min, max, number));
+		}
+	}
+	
+	public static void validMotorPower(double power)
+	{
+		if(power < -1 || power > 1)
+		{
+			assertFail(String.format("%.03f is not a valid motor power", power));
 		}
 	}
 	
@@ -187,23 +219,33 @@ public class Assert
 	{
 		robot.zeroOutListeners();
 		
-		System.err.println("\n\n--------------------------------------------------------------");
-		System.err.println("ASSERT FAILED\n");
-		System.err.println(message);
-		System.err.println("\nBacktrace follows: ");
+		StringBuilder failureMessage = new StringBuilder();
+		
+		failureMessage.append("\n\n--------------------------------------------------------------\n");
+		failureMessage.append("ASSERT FAILED\n\n");
+		failureMessage.append(message);
+		failureMessage.append("\n\nBacktrace follows: \n");
 		
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 		
 		//start counting at 2 to start at the function where the assert failed
 		for(int index = 2; index < stackTrace.length; ++index)
 		{
-			System.err.printf("at %s.%s() (%s:%d)\n", stackTrace[index].getClassName(), stackTrace[index].getMethodName(), stackTrace[index].getFileName(), stackTrace[index].getLineNumber());
+			failureMessage.append(String.format(
+					"at %s.%s() (%s:%d)\n",
+					stackTrace[index].getClassName(),
+					stackTrace[index].getMethodName(),
+					stackTrace[index].getFileName(),
+					stackTrace[index].getLineNumber()));
 		}
 		
-		System.err.println("\nExiting robot code");
-		System.err.println("--------------------------------------------------------------");
+		failureMessage.append("\nExiting robot code");
+		failureMessage.append("--------------------------------------------------------------");
 
+		System.err.println(message);
 		System.err.flush();
+		
+		DriverStation.reportError(message, false);
 		
 		// No more Watchdog.killRobot(), so we have to improvise
 		System.exit(3128);

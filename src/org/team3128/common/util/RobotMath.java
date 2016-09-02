@@ -154,7 +154,7 @@ public class RobotMath {
 	 * @param threshold
 	 * @return
 	 */
-	public static float thresh(float value, float threshold)
+	public static float threshold(float value, float threshold)
 	{
 		if(Math.abs(value) < Math.abs(threshold))
 		{
@@ -379,5 +379,24 @@ public class RobotMath {
 		return Math.atan2(y, x) * Angle.RADIANS;
 	}
 	
+	/**
+	 * Returns the absolute value of an integer
+	 * @param number
+	 * @return
+	 */
+	public static int abs(int number)
+	{
+		return number < 0 ? -number : number;
+	}
+	
+	/**
+	 * Returns the absolute value of a double
+	 * @param number
+	 * @return
+	 */
+	public static double abs(double number)
+	{
+		return number < 0 ? -number : number;
+	}
 
 }

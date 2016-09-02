@@ -3,11 +3,12 @@ package org.team3128.common.drive;
 import static java.lang.Math.abs;
 
 import org.team3128.common.autonomous.AutoUtils;
-import org.team3128.common.hardware.encoder.distance.IDistanceEncoder;
 import org.team3128.common.hardware.encoder.velocity.QuadratureEncoderLink;
 import org.team3128.common.hardware.motor.MotorGroup;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
+import org.team3128.common.util.VelocityPID;
+import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 
@@ -41,6 +42,16 @@ public class TankDrive
     public final double wheelBase;
     
     /**
+     * distance between front and back wheels
+     */
+    public final double track;
+    
+    /**
+     * Circumference of the turning circle when in-place turning
+     */
+    public final double turningCircleCircumference;
+    
+    /**
      * Ratio between turns of the wheels to turns of the encoder
      */
     private double gearRatio;
@@ -63,9 +74,10 @@ public class TankDrive
      * @param encRight The encoder on the right motors
      * @param wheelCircumfrence The circumference of the wheel
      * @param gearRatio The gear ratio of the turns of the wheels per turn of the encoder shaft
-     * @param wheelBase The diagonal distance between one front wheel and the opposite back wheel.
+     * @param wheelBase The distance between the front and back wheel on a side
+     * @param track distance between front and back wheels
      */
-    public TankDrive(MotorGroup leftMotors, MotorGroup rightMotors, QuadratureEncoderLink encLeft, QuadratureEncoderLink encRight, double wheelCircumfrence, double gearRatio, double wheelBase)
+    public TankDrive(MotorGroup leftMotors, MotorGroup rightMotors, QuadratureEncoderLink encLeft, QuadratureEncoderLink encRight, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
     {
     	this.leftMotors = leftMotors;
     	this.rightMotors = rightMotors;
@@ -75,7 +87,11 @@ public class TankDrive
     	
     	this.wheelCircumfrence = wheelCircumfrence;
     	this.wheelBase = wheelBase;
+    	this.track = track;
     	this.gearRatio = gearRatio;
+    	
+    	double turningCircleDiameter = Math.sqrt(RobotMath.square(track) + RobotMath.square(wheelBase)); //pythagorean theorem
+    	turningCircleCircumference = turningCircleDiameter * Math.PI;
     	
     	if(gearRatio <= 0)
     	{
@@ -172,9 +188,7 @@ public class TankDrive
 		
 		double difference = leftDist - rightDist;
 		
-		//if the right side has moved more than the left, than the value will be negative.
-		//this is OK, normalizeAngle() takes care of that.
-		return RobotMath.normalizeAngle((difference / (2 * Math.PI * wheelBase)) * Angle.ROTATIONS);
+		return RobotMath.normalizeAngle((difference / turningCircleCircumference) * Angle.ROTATIONS);
 	}
 	
 	/**
@@ -199,104 +213,135 @@ public class TankDrive
 		return (encDistance / 360) * wheelCircumfrence * gearRatio;
 	}
 	
-	
-	
     /**
-     * Command to to an arc turn in the specified amount of degrees.
-     * 
-     * Sets the opposite motors from the direction provided, so turning LEFT would set the RIGHT motors.
-     * 
-     * NOTE: currently requires that the front or back wheels be omni wheels for accurate turning.
+     * Enum for how CmdMoveDistance determines when to end a move command.
+     * @author Jamie
+     *
      */
-    public class CmdArcTurn extends Command {
-
-    	float _degs;
+	public enum MoveEndMode
+	{
+		BOTH, //ends when both sides have reached their targets.  Keeps moving both sides until then.  Make sure both encoders are working!
+		EITHER, //Stops both sides when either side has reached its target.
+		PER_SIDE //Stops each side when it reaches its target.  The command ends when both sides hit their targets.
+	}
+    
+  
+	/**
+     * Command to move each side of the drivetrain a specified distance.
+     * 
+     * Common logic shared by all of the autonomous movement commands
+     */
+    public class CmdMoveDistance extends Command {
+    	protected double power;
     	
-    	int _msec;
+    	protected double leftDist, rightDist;
     	
-    	long startTime;
+    	protected MoveEndMode endMode;
     	
     	/**
-    	 * rotations that the move will take
+    	 * @param leftDist Degrees to spin the left wheel
+    	 * @param rightDist Degrees to spin the right wheel
+    	 * @param power motor power to move at, from 0 to 1
     	 */
-    	double enc;
-    	
-    	QuadratureEncoderLink sideEncoder;
-    	
-    	QuadratureEncoderLink otherSideEncoder;
-    	
-    	MotorGroup sideMotors;
-    	
-    	MotorGroup otherSideMotors;
-    	
-    	/**
-    	 * @param degs how far to turn in degrees.  Accepts negative values.
-    	 * @param msec How long the move should take. If set to 0, do not time the move.
-    	 */
-        public CmdArcTurn(float degs, int msec, Direction dir)
+        public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, double power, double timeout)
         {
-        	_degs = degs;
+        	super(timeout);
+        	Assert.inRange(power, 0, 1);
         	
-        	_msec = msec;
-        	
-        	if(dir == Direction.RIGHT)
-        	{
-        		sideEncoder = encLeft;
-        		otherSideEncoder = encRight;
-        		
-        		sideMotors = leftMotors;
-        		otherSideMotors = rightMotors;
-        	}
-        	else
-        	{
-        		sideEncoder = encRight;
-        		otherSideEncoder = encLeft;
-        		
-        		sideMotors = rightMotors;
-        		otherSideMotors = leftMotors;
-        	}
+        	this.power = power;
+        	this.leftDist = leftDist;
+        	this.rightDist = rightDist;
+        	this.endMode = endMode;
         }
 
         protected void initialize()
         {
-    		enc = cmToEncDegrees((2.0* Math.PI * wheelBase)*(abs(_degs)/360.0));
     		clearEncoders();
-    		
-    		sideMotors.setTarget(AutoUtils.speedMultiplier * RobotMath.sgn(_degs) * .25);
-    		startTime = System.currentTimeMillis();
-        }
-
-        // Called repeatedly when this Command is scheduled to run
-        protected void execute()
-        {
-    		if(_msec != 0 && System.currentTimeMillis() - startTime >_msec)
-    		{
-    			stopMovement();
-    			AutoUtils.killRobot("Arc Turn Overtime");
-    		}
-    		
-    		//otherSideMotors.setControlTarget(-1 * RobotMath.getEstCIMPowerForRPM(otherSideEncoder.getSpeedInRPM()));
-    		
+    		leftMotors.setTarget(RobotMath.sgn(leftDist) * power);
+    		rightMotors.setTarget(RobotMath.sgn(rightDist) * power);
         }
 
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-        	//System.out.println(sideEncoder.getDistance());
-            return Math.abs(sideEncoder.getDistanceInDegrees()) >= enc;
+        	boolean leftDone = leftDist == 0  || encLeft.getDistanceInDegrees() >= leftDist;
+        	boolean rightDone = rightDist == 0  || encRight.getDistanceInDegrees() >= rightDist;
+        	
+
+        	
+        	switch(endMode)
+        	{
+        	case BOTH:
+        		return leftDone && rightDone;
+        	case EITHER:
+        		return leftDone || rightDone;
+        	case PER_SIDE:
+        	default:
+            	if(leftDone)
+            	{
+            		leftMotors.setTarget(0);
+            	}
+            	
+            	if(rightDone)
+            	{
+            		rightMotors.setTarget(0);
+            	}
+        		return leftDone && rightDone;
+        	}
         }
 
         // Called once after isFinished returns true
         protected void end()
         {
-    		stopMovement();
+        	stopMovement();
+        	if(isTimedOut())
+        	{
+    			AutoUtils.killRobot("Autonomous Move Overtime");
+        	}
         }
 
         // Called when another command which requires one or more of the same
         // subsystems is scheduled to run
         protected void interrupted()
         {
+        	stopMovement();
+        }
+
+		@Override
+		protected void execute()
+		{
+			//do nothing
+		}
+    }
+	
+    /**
+     * Command to to an arc turn in the specified amount of degrees.
+     * 
+     * Runs the opposite motors from the direction provided, so turning LEFT would set the RIGHT motors.
+     * 
+     * NOTE: currently requires that the front or back wheels be omni wheels for accurate turning.
+     */
+    public class CmdArcTurn extends CmdMoveDistance {
+    	
+    	/**
+    	 * @param degs how far to turn in degrees.  Accepts negative values.
+    	 * @param msec How long the move should take. If set to 0, do not time the move.
+    	 */
+        public CmdArcTurn(float degs, int msec, double power, Direction dir)
+        {
+        	super(MoveEndMode.PER_SIDE, 0, 0, power, msec);
         	
+        	//this formula is explained on the info repository wiki
+        	double wheelAngularDist = (2 * Math.PI * track) * (degs / 360);
+        	
+        	if(dir == Direction.RIGHT)
+        	{
+        		leftDist = wheelAngularDist;
+        	}
+        	else
+        	{
+        		rightDist = wheelAngularDist;
+        	}
         }
     }
     
@@ -317,103 +362,60 @@ public class TankDrive
      * -----------------------------------------------------*/
 
     /**
-     * Command to stop the robot
+     * Command to stop the robot. Useful on bigger, heavier robots (like TheClawwww) which take longer to stop.
      */
     public class CmdBrake extends Command 
-    {
-    	long startTime;
+    {    	
+    	VelocityPID leftPIDCalc, rightPIDCalc;
     	
-    	long _msec;
-    	
-    	double _power;
-    	
-    	boolean timedOut = false;
-    	
-    	boolean leftSideFinished = false;
-    	
-    	//sgn of the left side speed
-    	double leftSideDirection;
-    	
-    	boolean rightSideFinished = false;
-    	
-    	//sgn of the right side speed
-    	double rightSideDirection;
-    	
-    	
+        final static double completionThreshold = 20 * Angle.ROTATIONS;
+
     	/**
     	 * 
     	 * @param power Motor power to break with.
     	 * @param msec
     	 */
-        public CmdBrake(double power, int msec)
+        public CmdBrake(PIDConstants brakingConstants, int msec)
         {
-        	_power = power;
+        	super(msec);
         	
-        	if(power <= 0)
-        	{
-        		throw new IllegalArgumentException("The power must be greater than 0!");
-        	}
+        	leftPIDCalc = new VelocityPID(brakingConstants);
+        	leftPIDCalc.setDesiredVelocity(0);
         	
-        	_msec = msec;
+        	rightPIDCalc = new VelocityPID(brakingConstants);
+        	rightPIDCalc.setDesiredVelocity(0);
         }
 
         protected void initialize()
         {
-    		startTime = System.currentTimeMillis();
-    		
-    		double speedLeft = encLeft.getAngularSpeed();
-    		leftSideDirection = RobotMath.sgn(speedLeft);
-    		if(Math.abs(speedLeft) > threshold)
-    		{
-    			leftMotors.setTarget(AutoUtils.speedMultiplier * -1 * _power * leftSideDirection);
-    		}
-    		
-    		double speedRight = encRight.getAngularSpeed();
-    		rightSideDirection = RobotMath.sgn(speedRight);
-    		if(Math.abs(speedRight) > threshold)
-    		{
-    			rightMotors.setTarget(AutoUtils.speedMultiplier * -1 * _power * rightSideDirection);
-    		}
+
         }
 
         // Called repeatedly when this Command is scheduled to run
         protected void execute()
         {
-        	//System.out.println(encLeft.getSpeedInRPM() + " " + encRight.getSpeedInRPM());
-    		if(_msec != 0 && (System.currentTimeMillis() > startTime + _msec))
-    		{
-    			//one of these commands timing out is not neccesarily fatal
-    			Log.unusual("CmdBrake", "Timed Out!");
-    			timedOut = true;
-    		}
-    		
-    		double leftSpeed = encLeft.getAngularSpeed();
-    		if(RobotMath.sgn(leftSpeed) != leftSideDirection || leftSpeed < threshold)
-    		{
-    			leftSideFinished = true;
-    			leftMotors.setTarget(0);
-    		}
-    		
-    		double rightSpeed = encRight.getAngularSpeed();
-    		if(RobotMath.sgn(rightSpeed) != rightSideDirection || rightSpeed < threshold)
-    		{
-    			rightSideFinished = true;
-    			rightMotors.setTarget(0);
-    		}
+        	leftPIDCalc.update(encLeft.getAngularSpeed());
+        	leftMotors.setTarget(leftPIDCalc.getOutput());
+        	
+        	rightPIDCalc.update(encRight.getAngularSpeed());
+        	rightMotors.setTarget(rightPIDCalc.getOutput());
         }
         
-        final static double threshold = 20; // RPM
 
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-            return timedOut || (leftSideFinished && rightSideFinished);
+        	boolean leftFinished = RobotMath.abs(encLeft.getAngularSpeed()) > completionThreshold;
+        	boolean rightFinished = RobotMath.abs(encRight.getAngularSpeed()) > completionThreshold;
+        	
+        	return leftFinished && rightFinished;
         }
 
         // Called once after isFinished returns true
         protected void end()
         {
-    		stopMovement();
+    		leftPIDCalc.resetIntegral();
+    		rightPIDCalc.resetIntegral();
         }
 
         // Called when another command which requires one or more of the same
@@ -429,29 +431,8 @@ public class TankDrive
      * 
      * Sets the opposite motors from the direction provided, so turning LEFT would set the RIGHT motors.
      */
-    public class CmdInPlaceTurn extends Command {
-
-    	float _degs;
-    	
-    	int _msec;
-    	
-    	long startTime;
-    	
-    	double power = .5;
-    	
-    	/**
-    	 * rotations that the move will take
-    	 */
-    	double enc;
-    	
-    	IDistanceEncoder sideEncoder;
-    	IDistanceEncoder otherSideEncoder;
-
-    	
-    	MotorGroup forwardMotors;
-    	
-    	MotorGroup backwardMotors;
-    	
+    public class CmdInPlaceTurn extends CmdMoveDistance 
+    {
     	/**
     	 * @param degs how far to turn in degrees.  Accepts negative values.
     	 * @param msec How long the move should take. If set to 0, do not time the move
@@ -467,104 +448,32 @@ public class TankDrive
     	 */
         public CmdInPlaceTurn(float degs, double motorPower, int msec, Direction dir)
         {
-        	_degs = degs;
+        	//the encoder counts are an in-depth calculation, so we don't set them until after the super constructor
+        	super(MoveEndMode.PER_SIDE, 0, 0, motorPower, msec);
         	
-        	_msec = msec;
-        	
-        	this.power = motorPower;
+        	//this formula is explained in the info repository wiki
+    		double wheelAngularDist = cmToEncDegrees(turningCircleCircumference*(degs/360.0)); 
         	
         	if(dir == Direction.RIGHT)
         	{
-        		sideEncoder = encLeft;
-        		otherSideEncoder = encRight;
-        		forwardMotors = leftMotors;
-        		backwardMotors = rightMotors;
+        		leftDist = wheelAngularDist;
+        		rightDist = -wheelAngularDist;
         	}
         	else
         	{
-        		sideEncoder = encRight;
-        		otherSideEncoder = encLeft;
-
-        		forwardMotors = rightMotors;
-        		backwardMotors = leftMotors;
+        		leftDist = -wheelAngularDist;
+        		rightDist = wheelAngularDist;
         	}
-        }
-
-        protected void initialize()
-        {
-    		enc = RobotMath.floor(cmToEncDegrees((Math.PI * wheelBase)*(abs(_degs)/360.0))) * 1.05; 
-    		//NOTE: InPlaceTurn seems to consistently come short.  A scaling factor has been added to fix this
-    		// TODO: find out why!
-    		clearEncoders();
-    		forwardMotors.setTarget(AutoUtils.speedMultiplier * RobotMath.sgn(_degs) * power);
-    		backwardMotors.setTarget(AutoUtils.speedMultiplier * -1 * RobotMath.sgn(_degs)* power);
-    		startTime = System.currentTimeMillis();
-        }
-
-        // Called repeatedly when this Command is scheduled to run
-        protected void execute()
-        {
-    		if(_msec != 0 && System.currentTimeMillis() - startTime >_msec)
-    		{
-    			stopMovement();
-    			AutoUtils.killRobot("Arc Turn Overtime");
-    		}
-        }
-
-        // Make this return true when this Command no longer needs to run execute()
-        protected boolean isFinished()
-        {    	
-            return Math.abs(sideEncoder.getDistanceInDegrees()) >= enc;
-        }
-
-        // Called once after isFinished returns true
-        protected void end()
-        {
-        	if(encRight.getDistanceInDegrees() > 0)
-        	{
-        		Log.debug("CmdInPlaceTurn", "The right side went " + ((encRight.getDistanceInDegrees() * 100.0) / encRight.getDistanceInDegrees()) + "% of the left side");
-        	}
-        	else if(encLeft.getDistanceInDegrees() > 0)
-        	{
-        		Log.debug("CmdInPlaceTurn", "The left side went " + ((encLeft.getDistanceInDegrees() * 100.0) / encLeft.getDistanceInDegrees()) + "% of the right side");
-        	}
-        	
-    		stopMovement();
-        }
-
-        // Called when another command which requires one or more of the same
-        // subsystems is scheduled to run
-        protected void interrupted()
-        {
-        	
         }
     }
     
     
-    
     /**
-     * Command to move forward the given amount of centimeters
+     * Command to move forward the given amount of centimeters.  Drives straight, if you've set up your 
+     * speed multipliers properly.
      */
-    
-    
-    public class CmdMoveForward extends Command {
-
-    	double _cm;
-    	
-    	int _msec;
-    	
-    	long startTime;
-    	
-    	/**
-    	 * rotations that the move will take
-    	 */
-    	double enc;
-    	
-    	double power;
-    	    	
-    	boolean rightDone = false;
-    	
-    	boolean leftDone = false;
+    public class CmdMoveForward extends CmdMoveDistance 
+    {
     	
     	/**
     	 * @param d how far to move.  Accepts negative values.
@@ -572,11 +481,7 @@ public class TankDrive
     	 */
         public CmdMoveForward(double d, int msec, boolean fullSpeed)
         {
-        	_cm = d;
-        	
-        	power = fullSpeed ? 1 : .50;
-        	
-        	_msec = msec;
+        	super(MoveEndMode.PER_SIDE, cmToEncDegrees(d), cmToEncDegrees(d), fullSpeed ? 1 : .50, msec);
         }
         
     	/**
@@ -585,83 +490,18 @@ public class TankDrive
     	 */
         public CmdMoveForward(double d, int msec, double power)
         {
-        	_cm = d;
-        	
-        	this.power = power;
-        	
-        	_msec = msec;
-        }
+        	super(MoveEndMode.PER_SIDE, cmToEncDegrees(d), cmToEncDegrees(d), power, msec);
 
-        protected void initialize()
-        {
-        	
-    		clearEncoders();
-    		enc = abs(cmToEncDegrees(_cm));
-    		int norm = (int) RobotMath.sgn(_cm);
-    		startTime = System.currentTimeMillis();
-			leftMotors.setTarget(norm * power);
-			rightMotors.setTarget(norm * power);
         }
-
-        // Called repeatedly when this Command is scheduled to run
-        protected void execute()
+        
+        @Override
+        public void end()
         {
-    		if(_msec != 0 && (timeSinceInitialized() * 1000) >_msec)
-    		{
-    			stopMovement();
-    			// AutoUtils.killRobot("Move Overtime");
-    		}
-        }
-
-        // Make this return true when this Command no longer needs to run execute()
-        protected boolean isFinished()
-        {
-        	leftDone = Math.abs(encLeft.getDistanceInDegrees()) > enc;
-        	rightDone = Math.abs(encRight.getDistanceInDegrees()) > enc;
-        	
-            return leftDone || rightDone;
-        }
-
-        // Called once after isFinished returns true
-        protected void end()
-        {
-    		stopMovement();
-        	
-        	if(leftDone && encRight.getDistanceInDegrees() > 0)
-        	{
-        		Log.debug("CmdMoveForward", "The right side went at " + ((encRight.getDistanceInDegrees() * 100.0) / encRight.getDistanceInDegrees()) + "% of the left side");
-        	}
-        	else if(encLeft.getDistanceInDegrees() > 0)
-        	{
-        		Log.debug("CmdMoveForward", "The left side went at " + ((encLeft.getDistanceInDegrees() * 100.0) / encLeft.getDistanceInDegrees()) + "% of the right side");
-        	}
-        }
-
-        // Called when another command which requires one or more of the same
-        // subsystems is scheduled to run
-        protected void interrupted()
-        {
-        	end();
+        	super.end();
+    		Log.debug("CmdMoveForward", "The right side went " + ((encRight.getDistanceInDegrees() * 100.0) / encRight.getDistanceInDegrees()) + "% of the left side");
         }
     }
     
-    /*
-    *        _
-    *       / \ 
-    *      / _ \
-    *     / | | \
-    *    /  |_|  \
-    *   /    _    \
-    *  /    (_)    \
-    * /_____________\
-    * -----------------------------------------------------
-    * UNTESTED CODE!
-    * This class has never been tried on an actual robot.
-    * It may be non or partially functional.
-    * Do not make any assumptions as to its behavior!
-    * And don't blink.  Not even for a second.
-    * -----------------------------------------------------*/
-
    /**
     * Command to move forward the given amount of centimeters.
     * 
