@@ -491,10 +491,9 @@ public class ListenerManager
 					}
 				}
 			}
-		}
 
 		// loop through joystick values
-		for (Axis axis : newValues.joystickValues.keySet())
+		for (Axis axis : newControls.joystickValues.keySet())
 		{
 			if(currentControls.joystickValues.containsKey(axis))
 			{
@@ -502,7 +501,7 @@ public class ListenerManager
 				
 				double newValue = newControls.joystickValues.get(axis);
 				
-				if (Math.abs(oldControls.joystickValues.get(axis) - newValue) > .0001) //TODO there was an NPE here while practicing. It didn't recur. Investigate!
+				if (Math.abs(oldControls.joystickValues.get(axis) - newValue) > .0001)
 				{
 					addTypelessListenersForControl(genericListenersToInvoke, axis);
 					

@@ -246,7 +246,6 @@ public class TankDrive
         public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, double power, double timeout)
         {
         	super(timeout);
-        	Assert.inRange(power, 0, 1);
         	
         	this.power = power;
         	this.leftDist = leftDist;
