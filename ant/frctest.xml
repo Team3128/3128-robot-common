@@ -95,7 +95,7 @@
 		</junit>		
 	</target>
 	
-	<target name="runemulator" depends="frctest-emulator-jar" description="Run the robot emulator.">
+	<target name="runsimulator" depends="frctest-simulator-jar" description="Run the robot simulator.">
 		<java fork="true" classname="frctest.EmulatorMain">
 		  <classpath>
 		    <pathelement path="${emulatorclasspath}"/>
@@ -105,26 +105,25 @@
 		</java>
 	</target>
 	
-	<target name="debugemulator" depends="frctest-emulator-jar" description="Debug the robot emulator. Connect to port 5433.">
+	<target name="debugsimulator" depends="frctest-simulator-jar" description="Run the simulator in debug mode. Connect to port 5433.">
 		<java fork="true" classname="frctest.EmulatorMain">
 		  <classpath>
 		    <pathelement path="${emulatorclasspath}"/>
 		    <pathelement location="${robot-code-jar}"/>
 		  </classpath>
 		  <sysproperty key="java.library.path" value="${native-lib-folder}"/>
-			
 		  <jvmarg value="-Xdebug" />
 		  <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5433" />
 		</java>
 	</target>
 	
-	<target name="frctest-emulator-jar" depends="frctest-compile">
+	<target name="frctest-simulator-jar" depends="frctest-compile">
 		<jar destfile="${robot-code-jar}" update="true">
 		  <fileset dir="${emulator-build.dir}" includes="**/*.class"/>
 		</jar>
 	</target>
 	
-	<target name="unittest-compile" depends="frctest-emulator-jar" description="Compile the test code.">
+	<target name="unittest-compile" depends="frctest-simulator-jar" description="Compile the test code.">
 		<mkdir dir="${test-build.dir}"/>
 		<echo level="info">[FRC-Test] Compiling ${test-src.dir} to ${test-build.dir} using java ${ant.java.version}</echo>
 		
@@ -142,15 +141,13 @@
 	
 	<target name="frctest-compile" description="Compile the source code using the frctest jar.">
 		<mkdir dir="${emulator-build.dir}"/>
-	    <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} using ${ant.java.version}</echo>
+	    <echo>[frctest-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} using Java ${ant.java.version}</echo>
 		<echo level="info">[FRC-Test] Classpath: ${emulatorclasspath}</echo>
 		
 
 		<!-- check javac version, since the Eclipse-included Ant seems to sometimes use an older one-->
 		<if>
-			<not>
-		  		<equals arg1="${ant.java.version}" arg2="1.8"/>
-			</not>
+		  	<islessthan arg1="${ant.java.version}" arg2="1.8"/>
 		  	<then>
 				<echo>[FRC-Test] Ant is using an older java version (${ant.java.version}), if the compile fails that's probably why!</echo>
 		  	</then>

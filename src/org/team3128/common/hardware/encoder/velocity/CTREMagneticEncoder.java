@@ -7,10 +7,27 @@ import org.team3128.common.util.units.Angle;
 import edu.wpi.first.wpilibj.Counter;
 import edu.wpi.first.wpilibj.Encoder;
 
+/*        _
+ *       / \ 
+ *      / _ \
+ *     / [ ] \
+ *    /  [_]  \
+ *   /    _    \
+ *  /    (_)    \
+ * /_____________\
+ * -----------------------------------------------------
+ * UNTESTED CODE!
+ * This class has never been tried on an actual robot.
+ * It may be non or partially functional.
+ * Do not make any assumptions as to its behavior!
+ * And don't blink.  Not even for a second.
+ * -----------------------------------------------------*/
+
+
 /**
  * Driver for a CTRE Magnetic Encoder using DIO ports on the roborio.
  * 
- * When instantiated, it sets the quadrature distance from the absolute angle.
+ * When instantiated, it sets the distance from the absolute angle.
  * So, between 0 and 1 rotations. When reset, the distance goes to zero.
  * 
  * Internally, it uses a Counter to measure the PWM and a WPILib Encoder object
@@ -50,7 +67,7 @@ public class CTREMagneticEncoder implements IVelocityEncoder, IDistanceEncoder,
 		encoder.setDistancePerPulse(360.0/PULSES_PER_REVOLUTION);
 		
 		pwmCounter = new Counter(pwmPort);
-		pwmCounter.setSemiPeriodMode(true); //only count rising edges
+		pwmCounter.setSemiPeriodMode(false); //only count rising edges
 		
 		//wait for the pwm signal to be counted
 		try
