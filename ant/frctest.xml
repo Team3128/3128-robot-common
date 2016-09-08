@@ -95,7 +95,7 @@
 		</junit>		
 	</target>
 	
-	<target name="runsimulator" depends="frctest-simulator-jar" description="Run the robot simulator.">
+	<target name="runemulator" depends="frctest-emulator-jar" description="Run the robot emulator.">
 		<java fork="true" classname="frctest.EmulatorMain">
 		  <classpath>
 		    <pathelement path="${emulatorclasspath}"/>
@@ -105,7 +105,7 @@
 		</java>
 	</target>
 	
-	<target name="debugsimulator" depends="frctest-simulator-jar" description="Run the simulator in debug mode. Connect to port 5433.">
+	<target name="debugemulator" depends="frctest-emulator-jar" description="Run the emulator in debug mode. Connect to port 5433.">
 		<java fork="true" classname="frctest.EmulatorMain">
 		  <classpath>
 		    <pathelement path="${emulatorclasspath}"/>
@@ -117,13 +117,13 @@
 		</java>
 	</target>
 	
-	<target name="frctest-simulator-jar" depends="frctest-compile">
+	<target name="frctest-emulator-jar" depends="frctest-compile">
 		<jar destfile="${robot-code-jar}" update="true">
 		  <fileset dir="${emulator-build.dir}" includes="**/*.class"/>
 		</jar>
 	</target>
 	
-	<target name="unittest-compile" depends="frctest-simulator-jar" description="Compile the test code.">
+	<target name="unittest-compile" depends="frctest-emulator-jar" description="Compile the test code.">
 		<mkdir dir="${test-build.dir}"/>
 		<echo level="info">[FRC-Test] Compiling ${test-src.dir} to ${test-build.dir} using java ${ant.java.version}</echo>
 		
