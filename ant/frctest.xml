@@ -105,14 +105,13 @@
 		</java>
 	</target>
 	
-	<target name="debugemulator" depends="frctest-emulator-jar" description="Debug the robot emulator. Connect to port 5433.">
+	<target name="debugemulator" depends="frctest-emulator-jar" description="Run the emulator in debug mode. Connect to port 5433.">
 		<java fork="true" classname="frctest.EmulatorMain">
 		  <classpath>
 		    <pathelement path="${emulatorclasspath}"/>
 		    <pathelement location="${robot-code-jar}"/>
 		  </classpath>
 		  <sysproperty key="java.library.path" value="${native-lib-folder}"/>
-			
 		  <jvmarg value="-Xdebug" />
 		  <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5433" />
 		</java>
@@ -142,15 +141,13 @@
 	
 	<target name="frctest-compile" description="Compile the source code using the frctest jar.">
 		<mkdir dir="${emulator-build.dir}"/>
-	    <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} using ${ant.java.version}</echo>
+	    <echo>[frctest-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} using Java ${ant.java.version}</echo>
 		<echo level="info">[FRC-Test] Classpath: ${emulatorclasspath}</echo>
 		
 
 		<!-- check javac version, since the Eclipse-included Ant seems to sometimes use an older one-->
 		<if>
-			<not>
-		  		<equals arg1="${ant.java.version}" arg2="1.8"/>
-			</not>
+		  	<islessthan arg1="${ant.java.version}" arg2="1.8"/>
 		  	<then>
 				<echo>[FRC-Test] Ant is using an older java version (${ant.java.version}), if the compile fails that's probably why!</echo>
 		  	</then>

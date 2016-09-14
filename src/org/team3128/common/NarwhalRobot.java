@@ -170,11 +170,11 @@ public abstract class NarwhalRobot extends RobotBase
         FRCNetworkCommunicationsLibrary.FRCNetworkCommunicationObserveUserProgramStarting();
         // loop forever, calling the appropriate mode-dependent function
         
-        long lastLoopStartTime;
+        //long lastLoopStartTime;
         
 		while (true) {
 			
-			lastLoopStartTime = System.currentTimeMillis();
+			//lastLoopStartTime = System.currentTimeMillis();
 			
 			// Call the appropriate function depending upon the current robot mode
 			if (isDisabled()) {
@@ -207,7 +207,7 @@ public abstract class NarwhalRobot extends RobotBase
 					disabledPeriodic();
 				}
 			} else if (isTest()) {
-				// call TestInit() if we are now just entering test mode from either
+				// call testInit() if we are now just entering test mode from either
 				// a different mode or from power-on
 				if (!testInitialized) {
 					LiveWindow.setEnabled(true);
@@ -316,7 +316,7 @@ public abstract class NarwhalRobot extends RobotBase
 			e.printStackTrace();
 		}
 		
-		System.exit(7);
+		//System.exit(7);
 	}
 	
 	private void setupAutoChooser()
