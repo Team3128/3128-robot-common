@@ -175,45 +175,6 @@
 
   </target>
 
-  <!-- Simulate -->
-  <target name="jar-for-simulation" depends="compile">
-	<echo>[jar-for-simulation] Building jar.</echo>
-
-	<jar destfile="${simulation.dist.jar}">
-	  <manifest>
-		<attribute name="Built-By" value="${user.name}"/>
-		<attribute name="Robot-Class" value="${robot.class}"/>
-		<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
-	  </manifest>
-	  <fileset dir="${build.dir}" />
-	  <zipgroupfileset dir="${wpilib.sim.lib}">
-	  	<include name="**/*.jar" />
-	  </zipgroupfileset>
-	</jar>
-  </target>
-
-  <target name="simulate" depends="jar-for-simulation">
-    <sequential>
-      <echo>[simulate] You may now run Gazebo and your DriverStation</echo>
-	    <echo>[simulate] Running Code.</echo>
-	    <java jar="${simulation.dist.jar}" fork="true">
-          <jvmarg value="-Djava.library.path=${wpilib.sim.lib}" />
-      </java>
-    </sequential>
-  </target>
-
-  <target name="debug-simulate" depends="jar-for-simulation">
-    <sequential>
-      <echo>[simulate] You may now run Gazebo and your DriverStation</echo>
-	    <echo>[simulate] Running Code In Debug Mode.</echo>
-	    <java jar="${simulation.dist.jar}" fork="true">
-          <jvmarg value="-Xdebug" />
-          <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8348" />
-          <jvmarg value="-Djava.library.path=${wpilib.sim.lib}" />
-        </java>
-    </sequential>
-  </target>
-
   <target name="dependencies" depends="get-target-ip">
     <property name="ant.enable.asserts" value="true"/>
 	<post to="http://${target}/nisysapi/server" logfile="sysProps.xml" verbose="false" encoding="UTF-16LE" append="false">
