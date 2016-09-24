@@ -50,7 +50,7 @@ public class CmdTurnGyro extends Command {
 	
     public CmdTurnGyro(Gyro gyro, TankDrive drivetrain, double degrees, double threshold, PIDConstants pidConstants, int msec)
     {
-    	super(msec * 1000);
+    	super(msec / 1000.0);
     	this.degrees = degrees;
     	
     	this.threshold = threshold;
@@ -103,8 +103,7 @@ public class CmdTurnGyro extends Command {
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished()
     {
-    	//return Math.abs(gyro.getAngle() - degrees) < threshold && Math.abs(prevError) < threshold;
-    	return false;
+    	return Math.abs(gyro.getAngle() - degrees) < threshold && Math.abs(prevError) < threshold;
     }
 
     // Called once after isFinished returns true

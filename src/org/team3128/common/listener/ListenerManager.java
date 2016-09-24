@@ -380,7 +380,7 @@ public class ListenerManager
 			}
 		}
 		_controlValuesMutex.unlock();
-		
+				
 		return newControls;
 
 	}
@@ -526,7 +526,10 @@ public class ListenerManager
 						
 			for(Map.Entry<POV, POVValue> newPOVEntry : newControls.povValues.entrySet())
 			{
-				POVValue oldPOVValue = oldControls.povValues.get(newPOVEntry.getKey().getIndex());
+				POVValue oldPOVValue = oldControls.povValues.get(newPOVEntry.getKey());
+				
+				//Log.debug("ListenerManager", "old POV: " + String.valueOf(oldPOVValue) + " new POV: " + newPOVEntry.toString());
+
 				
 				if(oldPOVValue != null && !oldPOVValue.equals(newPOVEntry.getValue()))
 				{

@@ -86,5 +86,11 @@ public class POVValue
 		
 		return false;
 	}
+	
+	@Override
+	public String toString()
+	{
+		return "POVValue: direction: " + directionValue;
+	}
 
 }

@@ -258,16 +258,22 @@ public class TankDrive
     		clearEncoders();
     		leftMotors.setTarget(RobotMath.sgn(leftDist) * power);
     		rightMotors.setTarget(RobotMath.sgn(rightDist) * power);
+    		
+    		Log.debug("CmdMoveDistance", "left: " + leftDist + ", right: " + (RobotMath.sgn(rightDist) * power));
         }
 
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-        	boolean leftDone = leftDist == 0  || encLeft.getDistanceInDegrees() >= leftDist;
-        	boolean rightDone = rightDist == 0  || encRight.getDistanceInDegrees() >= rightDist;
+        	if(isTimedOut())
+        	{
+        		return true;
+        	}
         	
-
+        	boolean leftDone = leftDist == 0  || Math.abs(encLeft.getDistanceInDegrees()) >= Math.abs(leftDist);
+        	boolean rightDone = rightDist == 0  || Math.abs(encRight.getDistanceInDegrees()) >= Math.abs(rightDist);
         	
+        	//Log.debug("CmdMoveDistance", "Left dst: " + encLeft.getDistanceInDegrees() + ", Right dst: " + encRight.getDistanceInDegrees());
         	switch(endMode)
         	{
         	case BOTH:
