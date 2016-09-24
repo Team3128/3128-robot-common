@@ -498,25 +498,30 @@ public class ListenerManager
 			if(currentControls.joystickValues.containsKey(axis))
 			{
 				// has this particular value changed?
-				
-				double newValue = newControls.joystickValues.get(axis);
-				
-				if (Math.abs(oldControls.joystickValues.get(axis) - newValue) > .0001)
+				if(oldControls.joystickValues.containsKey(axis)) //sanity check to prevent NPE if the axes have changed
 				{
-					addTypelessListenersForControl(genericListenersToInvoke, axis);
+					double newValue = newControls.joystickValues.get(axis);
 					
-					// get all its registered listeners
-					HashSet<AxisListenerCallback> foundListeners = axisListeners.get(axis);
-	
-					if (foundListeners != null && !foundListeners.isEmpty())
+					if (Math.abs(oldControls.joystickValues.get(axis) - newValue) > .0001) 
 					{
-						// loop through them
-						for (AxisListenerCallback callback : foundListeners)
+						addTypelessListenersForControl(genericListenersToInvoke, axis);
+						
+						// get all its registered listeners
+						HashSet<AxisListenerCallback> foundListeners = axisListeners.get(axis);
+		
+						if (foundListeners != null && !foundListeners.isEmpty())
 						{
-							callback.onListener(newValue);
+							// loop through them
+							for (AxisListenerCallback callback : foundListeners)
+							{
+								
+								//Log.debug("ListenerManager", "Invoking listener for axis " + axis.getIndex() + " with value " + newValue);
+
+								callback.onListener(newValue);
+							}
 						}
+		
 					}
-	
 				}
 				}
 			}
