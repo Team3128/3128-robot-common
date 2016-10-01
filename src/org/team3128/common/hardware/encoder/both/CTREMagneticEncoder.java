@@ -1,11 +1,8 @@
-package org.team3128.common.hardware.encoder.velocity;
+package org.team3128.common.hardware.encoder.both;
 
-import org.team3128.common.hardware.encoder.angular.IAngularEncoder;
-import org.team3128.common.hardware.encoder.distance.IDistanceEncoder;
 import org.team3128.common.util.units.Angle;
 
 import edu.wpi.first.wpilibj.Counter;
-import edu.wpi.first.wpilibj.Encoder;
 
 /*        _
  *       / \ 
@@ -36,16 +33,14 @@ import edu.wpi.first.wpilibj.Encoder;
  * @author Narwhal
  *
  */
-public class CTREMagneticEncoder implements IVelocityEncoder, IDistanceEncoder,
-		IAngularEncoder
+public class CTREMagneticEncoder extends QuadratureEncoder
 {
 	// had to get this from a forum post by a CTR employee
-	private static final int PULSES_PER_REVOLUTION = 1024;
+	public static final int PULSES_PER_REVOLUTION = 1024;
 
-	Encoder encoder;
 	Counter pwmCounter;
 
-	double offsetDegrees;
+	double m360OffsetDegrees;
 
 	/**
 	 * 
@@ -57,69 +52,41 @@ public class CTREMagneticEncoder implements IVelocityEncoder, IDistanceEncoder,
 	 *            encoder)
 	 * @param pwmPort
 	 *            DIO port connected to pin 9 on the encoder, the PWM pin
+	 *            
+	 * The PWM signal is used to get absolute position, while the quadrature inputs are used for relative position.
 	 * 
 	 * @param inverted
 	 *            whether or not the encoder is inverted
 	 */
 	public CTREMagneticEncoder(int dataAPort, int dataBPort, int pwmPort, boolean inverted) 
 	{
-		encoder = new Encoder(dataAPort, dataBPort);
-		encoder.setDistancePerPulse(360.0/PULSES_PER_REVOLUTION);
+		super(dataAPort, dataBPort, PULSES_PER_REVOLUTION, inverted);
+		
 		
 		pwmCounter = new Counter(pwmPort);
 		pwmCounter.setSemiPeriodMode(false); //only count rising edges
-		
-		//wait for the pwm signal to be counted
-		try
-		{
-			Thread.sleep(5);
-		}
-		catch(InterruptedException e)
-		{
-			e.printStackTrace();
-		}
-		
-		offsetDegrees = getAngle();
-		
 	}
 
-	@Override
-	public double getAngularSpeed()
-	{
-
-		// getRate returns rotations / second
-		return encoder.getRate() * 60;
-	}
-
-	public void clear()
-	{
-		encoder.reset();
-		offsetDegrees = 0;
-	}
-
-	@Override
-	public double getDistanceInDegrees()
-	{
-		return encoder.getDistance() + (offsetDegrees / 360);
-	}
-
-	@Override
-	public double getAngle()
+	/**
+	 * Returns the absolute angle of the encoder from the PWM signal.  Each full rotation starts this angle back at 0.
+	 * @return
+	 */
+	public double getMod360Angle()
 	{
 		//from 1 to 4096 us
-		return ((pwmCounter.getPeriod() - 1e-6) / 4095e-6) * Angle.ROTATIONS;
+		return ((pwmCounter.getPeriod() - 1e-6) / 4095e-6) * Angle.ROTATIONS + m360OffsetDegrees;
 	}
 
 	@Override
-	public double getRawValue()
+	/**
+	 * Resets the absolute angle and the mod 360 angle.
+	 */
+	public void reset()
 	{
-		return pwmCounter.getPeriod();
-	}
-
-	@Override
-	public boolean canRevolveMultipleTimes()
-	{
-		return true;
+		super.reset();
+		m360OffsetDegrees += getMod360Angle();
+		m360OffsetDegrees = m360OffsetDegrees % 360;
+		
 	}
 
 }

@@ -3,7 +3,7 @@ package org.team3128.common.drive;
 import static java.lang.Math.abs;
 
 import org.team3128.common.autonomous.AutoUtils;
-import org.team3128.common.hardware.encoder.velocity.QuadratureEncoderLink;
+import org.team3128.common.hardware.encoder.both.QuadratureEncoder;
 import org.team3128.common.hardware.motor.MotorGroup;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
@@ -27,8 +27,8 @@ public class TankDrive
     	
     private MotorGroup rightMotors;
     
-	private QuadratureEncoderLink encLeft;
-	private QuadratureEncoderLink encRight;
+	private QuadratureEncoder encLeft;
+	private QuadratureEncoder encRight;
 	
     
     /**
@@ -77,7 +77,7 @@ public class TankDrive
      * @param wheelBase The distance between the front and back wheel on a side
      * @param track distance between front and back wheels
      */
-    public TankDrive(MotorGroup leftMotors, MotorGroup rightMotors, QuadratureEncoderLink encLeft, QuadratureEncoderLink encRight, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
+    public TankDrive(MotorGroup leftMotors, MotorGroup rightMotors, QuadratureEncoder encLeft, QuadratureEncoder encRight, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
     {
     	this.leftMotors = leftMotors;
     	this.rightMotors = rightMotors;
@@ -183,8 +183,8 @@ public class TankDrive
 	 */
 	public double getRobotAngle()
 	{
-		double leftDist = encDistanceToCm(encLeft.getDistanceInDegrees());
-		double rightDist = encDistanceToCm(encRight.getDistanceInDegrees());
+		double leftDist = encDistanceToCm(encLeft.getAngle());
+		double rightDist = encDistanceToCm(encRight.getAngle());
 		
 		double difference = leftDist - rightDist;
 		
@@ -263,8 +263,8 @@ public class TankDrive
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-        	boolean leftDone = leftDist == 0  || encLeft.getDistanceInDegrees() >= leftDist;
-        	boolean rightDone = rightDist == 0  || encRight.getDistanceInDegrees() >= rightDist;
+        	boolean leftDone = leftDist == 0  || encLeft.getAngle() >= leftDist;
+        	boolean rightDone = rightDist == 0  || encRight.getAngle() >= rightDist;
         	
 
         	
@@ -497,7 +497,7 @@ public class TankDrive
         public void end()
         {
         	super.end();
-    		Log.debug("CmdMoveForward", "The right side went " + ((encRight.getDistanceInDegrees() * 100.0) / encRight.getDistanceInDegrees()) + "% of the left side");
+    		Log.debug("CmdMoveForward", "The right side went " + ((encRight.getAngle() * 100.0) / encRight.getAngle()) + "% of the left side");
         }
     }
     
@@ -580,8 +580,8 @@ public class TankDrive
        // Make this return true when this Command no longer needs to run execute()
        protected boolean isFinished()
        {
-       	leftDone = Math.abs(encLeft.getDistanceInDegrees()) > enc;
-       	rightDone = Math.abs(encRight.getDistanceInDegrees()) > enc;
+       	leftDone = Math.abs(encLeft.getAngle()) > enc;
+       	rightDone = Math.abs(encRight.getAngle()) > enc;
        	
            return leftDone || rightDone;
        }
@@ -591,7 +591,7 @@ public class TankDrive
        {
    		stopMovement();
 
-       	Log.debug("CmdMoveStraightForward", "The right side went at " + ((encRight.getDistanceInDegrees() * 100.0) / encRight.getDistanceInDegrees()) + "% of the left side");
+       	Log.debug("CmdMoveStraightForward", "The right side went at " + ((encRight.getAngle() * 100.0) / encRight.getAngle()) + "% of the left side");
        }
 
        // Called when another command which requires one or more of the same
