@@ -39,8 +39,9 @@ public class CTREMagneticEncoder extends QuadratureEncoder
 	public static final int PULSES_PER_REVOLUTION = 1024;
 
 	Counter pwmCounter;
-
-	double m360OffsetDegrees;
+	
+	//initial offset read from the absolute position measurement
+	double encoderDegreeOffset;
 
 	/**
 	 * 
@@ -52,41 +53,65 @@ public class CTREMagneticEncoder extends QuadratureEncoder
 	 *            encoder)
 	 * @param pwmPort
 	 *            DIO port connected to pin 9 on the encoder, the PWM pin
-	 *            
-	 * The PWM signal is used to get absolute position, while the quadrature inputs are used for relative position.
+	 * 
+	 * @param measureStartingPosition
+	 *     If true, use the absolute PWM signal to figure out the absolute position of the encoder when the class is constructed.  Of
+	 *     course, this can only be between 0 and 360 degrees, so if your encoder rotates multiple times, this is pretty much useless.
+	 *           
+	 * @param startingOffset
+	 *     Degree offset TO add to the initial position measurement.  In other word, offset between the zero point of your encoder and
+	 *     the zero point of your mechanism.  If measureStartingPosition is false this does nothing.
+	 *           
+	 * The PWM signal is used to get absolute position, while the quadrature inputs are used for relative position and velocity.
+	 * 
 	 * 
 	 * @param inverted
 	 *            whether or not the encoder is inverted
 	 */
-	public CTREMagneticEncoder(int dataAPort, int dataBPort, int pwmPort, boolean inverted) 
+	public CTREMagneticEncoder(int dataAPort, int dataBPort, int pwmPort, boolean inverted, boolean measureStartingPosition, double startingOffset) 
 	{
 		super(dataAPort, dataBPort, PULSES_PER_REVOLUTION, inverted);
 		
-		
-		pwmCounter = new Counter(pwmPort);
-		pwmCounter.setSemiPeriodMode(false); //only count rising edges
+		if(measureStartingPosition)
+		{
+			pwmCounter = new Counter(pwmPort);
+			pwmCounter.setSemiPeriodMode(false); //only count rising edges
+			
+			//wait for the counter to count
+			try
+			{
+				Thread.sleep(1);
+			}
+			catch(InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+			
+			encoderDegreeOffset = getPWMAngle();
+		}
 	}
 
 	/**
 	 * Returns the absolute angle of the encoder from the PWM signal.  Each full rotation starts this angle back at 0.
 	 * @return
 	 */
-	public double getMod360Angle()
+	private double getPWMAngle()
 	{
 		//from 1 to 4096 us
-		return ((pwmCounter.getPeriod() - 1e-6) / 4095e-6) * Angle.ROTATIONS + m360OffsetDegrees;
+		return ((pwmCounter.getPeriod() - 1e-6) / 4095e-6) * Angle.ROTATIONS ;
 	}
-
+	
 	@Override
-	/**
-	 * Resets the absolute angle and the mod 360 angle.
-	 */
+	public double getAngle()
+	{
+		return encoder.getDistance() + encoderDegreeOffset;
+	}
+	
+	@Override 
 	public void reset()
 	{
+		encoderDegreeOffset = 0;  //we don't need this any more
 		super.reset();
-		m360OffsetDegrees += getMod360Angle();
-		m360OffsetDegrees = m360OffsetDegrees % 360;
-		
 	}
 
 }

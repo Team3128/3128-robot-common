@@ -58,7 +58,7 @@ public class QuadratureEncoder implements IVelocityEncoder, IDistanceEncoder
 	@Override
 	public void reset()
 	{
-		
+		encoder.reset();
 	}
 
 }
