@@ -164,8 +164,8 @@ public class TankDrive
     
 	public void clearEncoders()
 	{
-		encLeft.clear();
-		encRight.clear();
+		encLeft.reset();
+		encRight.reset();
 	}
 
 	public void stopMovement()
