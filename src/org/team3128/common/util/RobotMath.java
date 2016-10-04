@@ -149,35 +149,6 @@ public class RobotMath {
 	}
 	
 	/**
-	 * If the abs value of the number is less than the threshold, return 0, otherwise return the number
-	 * @param value
-	 * @param threshold
-	 * @return
-	 */
-	public static float threshold(float value, float threshold)
-	{
-		if(Math.abs(value) < Math.abs(threshold))
-		{
-			return 0;
-		}
-		return value;
-	}
-	
-	
-	/**
-	 * Converts linear distance to angular.
-	 * 
-	 * For example, if a wheel was touching a surface, and the surface moved x cm, then the wheel turned LinearDistToAngular(x) degrees.
-	 * @param cm
-	 * @param wheelCircumference the circumference of the circle
-	 * @return
-	 */
-	public static double LinearDistToAngular(double d, double circumference)
-	{
-		return (360 / circumference) * d;
-	}
-	
-	/**
 	 * Converts angular distance to linear.
 	 * 
 	 * For example, if a wheel was touching a surface, and the wheel turned y degrees, then the surface moved AngularDistToLinear(y) degrees.
@@ -258,6 +229,22 @@ public class RobotMath {
 	public static int intPow(int number, int power)
 	{
 		int result = 1;
+		for(; power >= 1; --power)
+		{
+			result *= number;
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Raises a double to a integer power >= 0.
+	 * 
+	 * More lightweight than the regular function, but also more restricted.  Negative powers are treated as 0.
+	 */
+	public static double intPow(double number, int power)
+	{
+		double result = 1;
 		for(; power >= 1; --power)
 		{
 			result *= number;
