@@ -166,7 +166,8 @@ public class SRXTankDrive
     	
     	//Log.debug("TankDrive", "x1: " + joyX + " throttle: " + throttle + " spdR: " + spdR + " spdL: " + spdL);
 
-    	
+    	leftMotors.set(spdL);
+    	rightMotors.set(spdR);
     }
     
     /**
