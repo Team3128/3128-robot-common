@@ -3,11 +3,10 @@ package org.team3128.common.util;
 import org.team3128.common.util.enums.MotorDir;
 import org.team3128.common.util.units.Angle;
 
+
 /**
 *
 * @author Noah Sutton-Smolin
-* 
-* Reorganized and optimized! Not original code, but same api... -morebytes
 */
 public class RobotMath {
    /**
@@ -20,7 +19,8 @@ public class RobotMath {
     */
    public static double normalizeAngle(double angle)
    {
-       return ((angle % 360) + 360) % 360;
+       double theta = ((angle % 360) + 360) % 360;
+       return theta;
    }
 
    //TODO: many of these functions exist in Java's Math class now that we aren't using Java ME
@@ -34,14 +34,15 @@ public class RobotMath {
     */
    public static double angleDistance(double angle1, double angle2, boolean shortWay)
    {
-       double retval = normalizeAngle(angle2) - normalizeAngle(angle1);
+       double dist = normalizeAngle(angle2) - normalizeAngle(angle1);
        
-       if(shortWay && Math.abs(retval) > 180)
+       if(shortWay && Math.abs(dist) > 180)
        {
-           retval = -(RobotMath.sgn(retval)) * (360 - Math.abs(retval));
+           double sgn = RobotMath.sgn(dist);
+           return -sgn * (360 - Math.abs(dist));
        }
        
-       return retval;
+       return dist;
    }
 
    
@@ -52,34 +53,23 @@ public class RobotMath {
     */
    public static double sgn(double n)
    {
-	   /*
-	    * This is a little trick to save space 
-	    * and increase speed. You will see it 
-	    * in a many more methods within this 
-	    * class. The parameter variable
-	    * is used instead of creating a control
-	    * variable with lots of nested if-else or
-	    * having multiple return statements, 
-	    * which is by far the worst programming
-	    * practice ever...
-	    */
-	   if(n != 0)
+	   if(n == 0)
 	   {
-		   n = Math.abs(n) / n;
+		   return 0;
 	   }
 	   
-       return n;
+       return Math.abs(n) / n;
    
    }
    
    public static int sgn(int n)
    {
-	   if(n != 0)
+	   if(n == 0)
 	   {
-		   n = Math.abs(n) / n;
+		   return 0;
 	   }
 	   
-       return n;
+       return Math.abs(n) / n;
    }
   
 
@@ -94,18 +84,12 @@ public class RobotMath {
     */
    public static MotorDir getMotorDirToTarget(double currentAngle, double targetAngle, boolean shortWay) 
    {
-	   MotorDir retval;
-	   
        currentAngle = RobotMath.normalizeAngle(currentAngle);
        targetAngle = RobotMath.normalizeAngle(targetAngle);
-       int difference = ((shortWay && Math.abs(currentAngle - targetAngle) > 180 ) ? 1 : -1) * (currentAngle - targetAngle < 0 ? -1 : 1);
+       int retDir = 1 * ((shortWay && Math.abs(currentAngle - targetAngle) > 180 )? 1 : -1) * (currentAngle - targetAngle < 0 ? -1 : 1);
 
-       if (Math.abs(currentAngle - targetAngle) < .001)
-    	   retval = MotorDir.NONE;
-       else
-    	   retval = (difference == 1) ? MotorDir.CW : MotorDir.CCW;
-       
-       return retval;
+       if (Math.abs(currentAngle - targetAngle) < .001) return MotorDir.NONE;
+       return (retDir == 1 ? MotorDir.CW : MotorDir.CCW);
    }
 
    /**
@@ -143,7 +127,7 @@ public class RobotMath {
 	 * @param d
 	 */
 	public static double clampPosNeg1(double d) {
-		d = clamp(d, -1, 1);
+		clamp(d, -1, 1);
 		return d;
 	}
    
@@ -157,18 +141,11 @@ public class RobotMath {
 	 */
 	public static double thresh(double value, double threshold)
 	{
-		double retval;
-		
 		if(Math.abs(value) < Math.abs(threshold))
 		{
-			retval = 0;
+			return 0;
 		}
-		else
-		{
-			retval = value;
-		}
-		
-		return retval;
+		return value;
 	}
 	
 	/**
@@ -251,14 +228,13 @@ public class RobotMath {
 	 */
 	public static int intPow(int number, int power)
 	{
-		int retval = 1;
-		
+		int result = 1;
 		for(; power >= 1; --power)
 		{
-			retval *= number;
+			result *= number;
 		}
 		
-		return retval;
+		return result;
 	}
 	
 	/**
@@ -268,14 +244,13 @@ public class RobotMath {
 	 */
 	public static double intPow(double number, int power)
 	{
-		double retval = 1;
-		
+		double result = 1;
 		for(; power >= 1; --power)
 		{
-			retval *= number;
+			result *= number;
 		}
 		
-		return retval;
+		return result;
 	}
 	
 	/**
@@ -286,14 +261,14 @@ public class RobotMath {
 	 */
 	public static int round(double d)
 	{
-		d = Math.round(d);
+		long roundedLong = Math.round(d);
 		
-		if(Math.abs(d) > Integer.MAX_VALUE)
+		if(Math.abs(roundedLong) > Integer.MAX_VALUE)
 		{
 			throw new IllegalArgumentException("Provided number is too large to be an integer!");
 		}
-				
-		return (int)d;
+		
+		return (int)roundedLong;
 	}
 	
 	/**
@@ -328,14 +303,13 @@ public class RobotMath {
 	 */
 	public static int ceil(double d) 
 	{
-		d = Math.ceil(d);
-		
-		if(!Double.isFinite(d) || d > Integer.MAX_VALUE)
+		double ceilinged = Math.ceil(d);
+		if(!Double.isFinite(ceilinged) || ceilinged > Integer.MAX_VALUE)
 		{
 			throw new IllegalArgumentException("The provided double cannot be represented by an int");
 		}
 		
-		return (int)d;
+		return (int)ceilinged;
 	}
 	
 	/**
@@ -346,14 +320,14 @@ public class RobotMath {
 	 */
 	public static int floor(double d)
 	{
-		d = Math.floor(d);
+		double floored = Math.floor(d);
 		   
-		if(!Double.isFinite(d) || d > Integer.MAX_VALUE)
+		if(!Double.isFinite(floored) || floored > Integer.MAX_VALUE)
 		{
 			throw new IllegalArgumentException("The provided double cannot be represented by an int");
 		}
 		   
-		return (int)d;
+		return (int)floored;
 	}
 	
 	/**
