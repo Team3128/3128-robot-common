@@ -268,8 +268,10 @@ public class TankDrive
         	boolean leftDone = leftDist == 0  || encLeft.getAngle() >= leftDist;
         	boolean rightDone = rightDist == 0  || encRight.getAngle() >= rightDist;
         	
-        	boolean leftDone = leftDist == 0  || Math.abs(encLeft.getDistanceInDegrees()) >= Math.abs(leftDist);
-        	boolean rightDone = rightDist == 0  || Math.abs(encRight.getDistanceInDegrees()) >= Math.abs(rightDist);
+        	if(isTimedOut())
+        	{
+        		return true;
+        	}
         	
         	//Log.debug("CmdMoveDistance", "Left dst: " + encLeft.getDistanceInDegrees() + ", Right dst: " + encRight.getDistanceInDegrees());
         	switch(endMode)
