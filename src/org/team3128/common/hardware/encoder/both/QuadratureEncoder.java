@@ -1,6 +1,7 @@
-package org.team3128.common.hardware.encoder.velocity;
+package org.team3128.common.hardware.encoder.both;
 
 import org.team3128.common.hardware.encoder.distance.IDistanceEncoder;
+import org.team3128.common.hardware.encoder.velocity.IVelocityEncoder;
 
 import edu.wpi.first.wpilibj.CounterBase.EncodingType;
 import edu.wpi.first.wpilibj.Encoder;
@@ -10,7 +11,7 @@ import edu.wpi.first.wpilibj.Encoder;
  * @author Narwhal
  *
  */
-public class QuadratureEncoderLink implements IVelocityEncoder, IDistanceEncoder
+public class QuadratureEncoder implements IVelocityEncoder, IDistanceEncoder
 {
 	Encoder encoder;
 	
@@ -22,7 +23,7 @@ public class QuadratureEncoderLink implements IVelocityEncoder, IDistanceEncoder
 	 * or its datasheet.
 	 * @param inverted whether or not the encoder is inverted
 	 */
-	public QuadratureEncoderLink(int dataAPort, int dataBPort, double pulsesPerRevolution, boolean inverted) 
+	public QuadratureEncoder(int dataAPort, int dataBPort, double pulsesPerRevolution, boolean inverted) 
 	{
 		encoder = new Encoder(dataAPort, dataBPort, inverted, EncodingType.k4X);
 		encoder.setDistancePerPulse(360/pulsesPerRevolution);
@@ -33,16 +34,31 @@ public class QuadratureEncoderLink implements IVelocityEncoder, IDistanceEncoder
 		
 		return encoder.getRate();
 	}
-	
-	public void clear()
+
+
+	@Override
+	public double getAngle()
 	{
-		encoder.reset();
+		return encoder.getDistance();
 	}
 
 	@Override
-	public double getDistanceInDegrees()
+	public double getRawValue()
 	{
-		return encoder.getDistance();
+		return encoder.get();
+	}
+
+	@Override
+	public boolean canRevolveMultipleTimes()
+	{
+		//I THINK this is true of all quadrature encoders...
+		return true;
+	}
+
+	@Override
+	public void reset()
+	{
+		encoder.reset();
 	}
 
 }

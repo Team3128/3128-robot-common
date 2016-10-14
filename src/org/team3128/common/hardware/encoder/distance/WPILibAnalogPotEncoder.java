@@ -1,4 +1,4 @@
-package org.team3128.common.hardware.encoder.angular;
+package org.team3128.common.hardware.encoder.distance;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
@@ -6,11 +6,11 @@ import edu.wpi.first.wpilibj.AnalogPotentiometer;
 /**
  * Represents a variable resistor/potentiometer encoder using the WPILib AnalogPotentiometer class.
  * 
- * I can't believe I missed this before!
+ * I can't believe I missed this class before!
  * @author Jamie
  *
  */
-public class WPILibAnalogPotEncoder implements IAngularEncoder
+public class WPILibAnalogPotEncoder implements IDistanceEncoder
 {
 	AnalogInput input;
 	
@@ -49,6 +49,13 @@ public class WPILibAnalogPotEncoder implements IAngularEncoder
 	public boolean canRevolveMultipleTimes()
 	{
 		return false;
+	}
+
+	@Override
+	public void reset()
+	{
+		// TODO Auto-generated method stub
+		
 	}
 
 }

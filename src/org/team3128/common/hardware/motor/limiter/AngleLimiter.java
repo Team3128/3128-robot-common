@@ -1,6 +1,6 @@
 package org.team3128.common.hardware.motor.limiter;
 
-import org.team3128.common.hardware.encoder.angular.IAngularEncoder;
+import org.team3128.common.hardware.encoder.distance.IDistanceEncoder;
 import org.team3128.common.hardware.motor.Limiter;
 
 /*
@@ -35,7 +35,7 @@ public class AngleLimiter extends Limiter
     
     private boolean hitMinStop, hitMaxStop;
         
-    private IAngularEncoder _encoder;
+    private IDistanceEncoder _encoder;
 
     /**
      * 
@@ -45,7 +45,7 @@ public class AngleLimiter extends Limiter
      * the thing time to stop.
      * @param encoder The encoder to use.
      */
-    public AngleLimiter(double minAngle, double maxAngle, double jitter, IAngularEncoder encoder)
+    public AngleLimiter(double minAngle, double maxAngle, double jitter, IDistanceEncoder encoder)
     {
     	_minAngle = minAngle;
     	_maxAngle = maxAngle;

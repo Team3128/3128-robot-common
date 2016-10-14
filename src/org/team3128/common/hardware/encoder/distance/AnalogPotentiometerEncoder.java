@@ -1,4 +1,4 @@
-package org.team3128.common.hardware.encoder.angular;
+package org.team3128.common.hardware.encoder.distance;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.Sendable;
@@ -9,11 +9,11 @@ import edu.wpi.first.wpilibj.tables.ITable;
  * @author Kian, Jamie
  *
  */
-public class AnalogPotentiometerEncoder implements IAngularEncoder, Sendable
+public class AnalogPotentiometerEncoder implements IDistanceEncoder, Sendable
 {
 	private AnalogInput enc;
 	private double degreesPerVolt;
-    private final double offset;
+    private double offset;
     
     private ITable table;
     
@@ -75,6 +75,13 @@ public class AnalogPotentiometerEncoder implements IAngularEncoder, Sendable
 	public String getSmartDashboardType()
 	{
 		return "Potentiometer";
+	}
+
+	@Override
+	public void reset()
+	{
+		offset = getAngle();
+		
 	}
 
 }

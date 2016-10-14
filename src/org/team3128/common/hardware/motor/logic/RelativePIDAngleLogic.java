@@ -175,7 +175,7 @@ public class RelativePIDAngleLogic extends MotorLogic
     		isAutoResetting = true;
     		
     		//which way do we go?
-    		autoResetDirection = RobotMath.sgn(RobotMath.angleDistance(_encoder.getDistanceInDegrees(), this.targetAngle, true));
+    		autoResetDirection = RobotMath.sgn(RobotMath.angleDistance(_encoder.getAngle(), this.targetAngle, true));
     		
     	}
     }
@@ -196,7 +196,7 @@ public class RelativePIDAngleLogic extends MotorLogic
      */
     public double getAngle()
     {
-    	 return _encoder.getDistanceInDegrees() + angleOffset;
+    	 return _encoder.getAngle() + angleOffset;
     }
 }
 

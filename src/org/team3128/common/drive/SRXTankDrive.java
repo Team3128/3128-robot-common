@@ -1,34 +1,34 @@
 package org.team3128.common.drive;
 
-import static java.lang.Math.abs;
-
 import org.team3128.common.autonomous.AutoUtils;
-import org.team3128.common.hardware.encoder.both.QuadratureEncoder;
-import org.team3128.common.hardware.motor.MotorGroup;
-import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
-import org.team3128.common.util.VelocityPID;
-import org.team3128.common.util.datatypes.PIDConstants;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 
+import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.command.Command;
 
 /**
- * Class which represents a tank drive on a robot.
+ * Class which represents a tank drive powered by Talon SRXs on a robot.
  * 
- * Also provides commands for autonomous movement.
+ * Uses positional PID for high-accuracy autonomous moves.
+ * Make sure that the SRXs have quadrature encoders attached, have FeedbackDevice set, 
+ * and that are configured to the correct number of counts per revolution.
+ * 
+ * 
  * @author Jamie
  *
  */
-public class TankDrive
+public class SRXTankDrive
 {
-	private MotorGroup leftMotors;
+	private CANTalon leftMotors;
     	
-    private MotorGroup rightMotors;
+    private CANTalon rightMotors;
     
-	private QuadratureEncoder encLeft;
-	private QuadratureEncoder encRight;
+    /**
+     * True if the talons are set in PercentVbus mode for teleop driving, false if they are in position PID mode for auto.
+     */
+    private boolean configuredForTeleop;
 	
     
     /**
@@ -67,23 +67,19 @@ public class TankDrive
 	}
 
 	/**
+     * If there is more than one motor per side, configure each additional Talon to follow the one with the encoder using Follower mode.
      * 
-     * @param leftMotors The motors on the left side of the robot
-     * @param rightMotors The motors on the riht side of the robot.
-     * @param encLeft The encoder on the left motors
-     * @param encRight The encoder on the right motors
+     * @param leftMotors The "lead" Talon SRX on the left side.
+     * @param rightMotors The "lead" Talon SRX on the right side.
      * @param wheelCircumfrence The circumference of the wheel
      * @param gearRatio The gear ratio of the turns of the wheels per turn of the encoder shaft
      * @param wheelBase The distance between the front and back wheel on a side
      * @param track distance between front and back wheels
      */
-    public TankDrive(MotorGroup leftMotors, MotorGroup rightMotors, QuadratureEncoder encLeft, QuadratureEncoder encRight, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
+    public SRXTankDrive(CANTalon leftMotors, CANTalon rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
     {
     	this.leftMotors = leftMotors;
     	this.rightMotors = rightMotors;
-    	
-    	this.encLeft = encLeft;
-    	this.encRight = encRight;
     	
     	this.wheelCircumfrence = wheelCircumfrence;
     	this.wheelBase = wheelBase;
@@ -96,6 +92,28 @@ public class TankDrive
     	if(gearRatio <= 0)
     	{
     		throw new IllegalArgumentException("Invalid gear ratio");
+    	}
+    }
+
+    private void configureForTeleop()
+    {
+    	if(!configuredForTeleop)
+    	{
+	    	leftMotors.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
+	    	rightMotors.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
+	    	
+	    	configuredForTeleop = true;
+    	}
+    }
+    
+    private void configureForAuto()
+    {
+    	if(configuredForTeleop)
+    	{
+	    	leftMotors.changeControlMode(CANTalon.TalonControlMode.Position);
+	    	rightMotors.changeControlMode(CANTalon.TalonControlMode.Position);
+	    	
+	    	configuredForTeleop = false;
     	}
     }
     
@@ -111,12 +129,13 @@ public class TankDrive
 	 */
     public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
     {
+    	configureForTeleop();
     	
         double spdL, spdR;
     	//read joystick values
-    	joyX = Math.abs(joyX) > thresh ? -1 * joyX : 0.0;
+    	joyX = RobotMath.thresh(joyX, thresh);
     	
-       	joyY = Math.abs(joyY) > thresh ? -1 * joyY : 0.0;
+    	joyX = RobotMath.thresh(joyY, thresh);
     	
     	if(!fullSpeed)
     	{
@@ -147,8 +166,8 @@ public class TankDrive
     	
     	//Log.debug("TankDrive", "x1: " + joyX + " throttle: " + throttle + " spdR: " + spdR + " spdL: " + spdL);
 
-    	leftMotors.setTarget(spdL);
-    	rightMotors.setTarget(spdR);
+    	leftMotors.set(spdL);
+    	rightMotors.set(spdR);
     }
     
     /**
@@ -158,20 +177,25 @@ public class TankDrive
      */
     public void tankDrive(double powL, double powR)
     {
-    	leftMotors.setTarget(powL);
-    	rightMotors.setTarget(powR);
+    	configureForTeleop();
+    	leftMotors.set(powL);
+    	rightMotors.set(powR);
     }
     
 	public void clearEncoders()
 	{
-		encLeft.reset();
-		encRight.reset();
+		leftMotors.setPosition(0);
+		rightMotors.setPosition(0);
 	}
 
 	public void stopMovement()
 	{
-		leftMotors.setTarget(0);
-		rightMotors.setTarget(0);
+		// not sure about the best way to do this
+		// we can disable the motors, but then we have to reenable them later
+		// so I do it this way instead
+		
+		configureForTeleop();
+		tankDrive(0, 0);
 	}
 	
 	/**
@@ -183,8 +207,8 @@ public class TankDrive
 	 */
 	public double getRobotAngle()
 	{
-		double leftDist = encDistanceToCm(encLeft.getAngle());
-		double rightDist = encDistanceToCm(encRight.getAngle());
+		double leftDist = encDistanceToCm(leftMotors.getPosition() * Angle.ROTATIONS);
+		double rightDist = encDistanceToCm(rightMotors.getPosition() * Angle.ROTATIONS);
 		
 		double difference = leftDist - rightDist;
 		
@@ -220,9 +244,8 @@ public class TankDrive
      */
 	public enum MoveEndMode
 	{
-		BOTH, //ends when both sides have reached their targets.  Keeps moving both sides until then.  Make sure both encoders are working!
-		EITHER, //Stops both sides when either side has reached its target.
-		PER_SIDE //Stops each side when it reaches its target.  The command ends when both sides hit their targets.
+		BOTH, //ends when both sides have reached their targets.  
+		EITHER, //Stops both sides when either side has reached its target.  Force stops the move command of the slower side.
 	}
     
   
@@ -231,12 +254,19 @@ public class TankDrive
      * 
      * Common logic shared by all of the autonomous movement commands
      */
-    public class CmdMoveDistance extends Command {
+    public class CmdMoveDistance extends Command
+    {
+    	//when the wheels' angular distance get within this threshold of the correct value, that side is considered done
+    	final static double MOVEMENT_ERROR_THRESHOLD = 45 * Angle.DEGREES; 
+    	
     	protected double power;
     	
     	protected double leftDist, rightDist;
     	
     	protected MoveEndMode endMode;
+    	
+    	boolean leftDone;
+    	boolean rightDone;
     	
     	/**
     	 * @param leftDist Degrees to spin the left wheel
@@ -255,41 +285,26 @@ public class TankDrive
 
         protected void initialize()
         {
+        	configureForAuto();
     		clearEncoders();
-    		leftMotors.setTarget(RobotMath.sgn(leftDist) * power);
-    		rightMotors.setTarget(RobotMath.sgn(rightDist) * power);
     		
-    		Log.debug("CmdMoveDistance", "left: " + leftDist + ", right: " + (RobotMath.sgn(rightDist) * power));
+    		leftMotors.set(leftDist / Angle.ROTATIONS);
+    		rightMotors.set(rightDist / Angle.ROTATIONS);
         }
 
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-        	boolean leftDone = leftDist == 0  || encLeft.getAngle() >= leftDist;
-        	boolean rightDone = rightDist == 0  || encRight.getAngle() >= rightDist;
+        	leftDone = leftDist == 0  || RobotMath.abs(leftMotors.getClosedLoopError() * Angle.ROTATIONS) > MOVEMENT_ERROR_THRESHOLD;
+        	rightDone = rightDist == 0  || RobotMath.abs(rightMotors.getClosedLoopError() * Angle.ROTATIONS) > MOVEMENT_ERROR_THRESHOLD;
         	
-        	boolean leftDone = leftDist == 0  || Math.abs(encLeft.getDistanceInDegrees()) >= Math.abs(leftDist);
-        	boolean rightDone = rightDist == 0  || Math.abs(encRight.getDistanceInDegrees()) >= Math.abs(rightDist);
-        	
-        	//Log.debug("CmdMoveDistance", "Left dst: " + encLeft.getDistanceInDegrees() + ", Right dst: " + encRight.getDistanceInDegrees());
         	switch(endMode)
         	{
         	case BOTH:
         		return leftDone && rightDone;
         	case EITHER:
-        		return leftDone || rightDone;
-        	case PER_SIDE:
         	default:
-            	if(leftDone)
-            	{
-            		leftMotors.setTarget(0);
-            	}
-            	
-            	if(rightDone)
-            	{
-            		rightMotors.setTarget(0);
-            	}
-        		return leftDone && rightDone;
+        		return leftDone || rightDone;
         	}
         }
 
@@ -332,7 +347,7 @@ public class TankDrive
     	 */
         public CmdArcTurn(float degs, int msec, double power, Direction dir)
         {
-        	super(MoveEndMode.PER_SIDE, 0, 0, power, msec);
+        	super(MoveEndMode.BOTH, 0, 0, power, msec);
         	
         	//this formula is explained on the info repository wiki
         	double wheelAngularDist = (2 * Math.PI * track) * (degs / 360);
@@ -348,86 +363,6 @@ public class TankDrive
         }
     }
     
-    /*
-     *       /^\ 
-     *      / _ \
-     *     / | | \
-     *    /  |_|  \
-     *   /    _    \
-     *  /    (_)    \
-     * /_____________\
-     * -----------------------------------------------------
-     * UNTESTED CODE!
-     * This class has never been tried on an actual robot.
-     * It may be non or partially functional.
-     * Do not make any assumptions as to its behavior!
-     * And don't blink.  Not even for a second.
-     * -----------------------------------------------------*/
-
-    /**
-     * Command to stop the robot. Useful on bigger, heavier robots (like TheClawwww) which take longer to stop.
-     */
-    public class CmdBrake extends Command 
-    {    	
-    	VelocityPID leftPIDCalc, rightPIDCalc;
-    	
-        final static double completionThreshold = 20 * Angle.ROTATIONS;
-
-    	/**
-    	 * 
-    	 * @param power Motor power to break with.
-    	 * @param msec
-    	 */
-        public CmdBrake(PIDConstants brakingConstants, int msec)
-        {
-        	super(msec);
-        	
-        	leftPIDCalc = new VelocityPID(brakingConstants);
-        	leftPIDCalc.setDesiredVelocity(0);
-        	
-        	rightPIDCalc = new VelocityPID(brakingConstants);
-        	rightPIDCalc.setDesiredVelocity(0);
-        }
-
-        protected void initialize()
-        {
-
-        }
-
-        // Called repeatedly when this Command is scheduled to run
-        protected void execute()
-        {
-        	leftPIDCalc.update(encLeft.getAngularSpeed());
-        	leftMotors.setTarget(leftPIDCalc.getOutput());
-        	
-        	rightPIDCalc.update(encRight.getAngularSpeed());
-        	rightMotors.setTarget(rightPIDCalc.getOutput());
-        }
-        
-
-        // Make this return true when this Command no longer needs to run execute()
-        protected boolean isFinished()
-        {
-        	boolean leftFinished = RobotMath.abs(encLeft.getAngularSpeed()) > completionThreshold;
-        	boolean rightFinished = RobotMath.abs(encRight.getAngularSpeed()) > completionThreshold;
-        	
-        	return leftFinished && rightFinished;
-        }
-
-        // Called once after isFinished returns true
-        protected void end()
-        {
-    		leftPIDCalc.resetIntegral();
-    		rightPIDCalc.resetIntegral();
-        }
-
-        // Called when another command which requires one or more of the same
-        // subsystems is scheduled to run
-        protected void interrupted()
-        {
-        	
-        }
-    }
     
     /**
      * Command to to an arc turn in the specified amount of degrees.
@@ -452,7 +387,7 @@ public class TankDrive
         public CmdInPlaceTurn(float degs, double motorPower, int msec, Direction dir)
         {
         	//the encoder counts are an in-depth calculation, so we don't set them until after the super constructor
-        	super(MoveEndMode.PER_SIDE, 0, 0, motorPower, msec);
+        	super(MoveEndMode.BOTH, 0, 0, motorPower, msec);
         	
         	//this formula is explained in the info repository wiki
     		double wheelAngularDist = cmToEncDegrees(turningCircleCircumference*(degs/360.0)); 
@@ -484,7 +419,7 @@ public class TankDrive
     	 */
         public CmdMoveForward(double d, int msec, boolean fullSpeed)
         {
-        	super(MoveEndMode.PER_SIDE, cmToEncDegrees(d), cmToEncDegrees(d), fullSpeed ? 1 : .50, msec);
+        	super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), fullSpeed ? 1 : .50, msec);
         }
         
     	/**
@@ -493,7 +428,7 @@ public class TankDrive
     	 */
         public CmdMoveForward(double d, int msec, double power)
         {
-        	super(MoveEndMode.PER_SIDE, cmToEncDegrees(d), cmToEncDegrees(d), power, msec);
+        	super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), power, msec);
 
         }
         
@@ -501,109 +436,8 @@ public class TankDrive
         public void end()
         {
         	super.end();
-    		Log.debug("CmdMoveForward", "The right side went " + ((encRight.getAngle() * 100.0) / encRight.getAngle()) + "% of the left side");
         }
     }
-    
-   /**
-    * Command to move forward the given amount of centimeters.
-    * 
-    * It uses a feedback loop to make the robot drive straight.
-    */
-   public class CmdMoveStraightForward extends Command {
 
-   	double _cm;
-   	
-   	int _msec;
-   	
-   	long startTime;
-   	
-   	double kP;
-   	
-   	double kD = .0001;
-   	
-   	double lastError = 0;
-   	
-   	/**
-   	 * rotations that the move will take
-   	 */
-   	double enc;
-   	
-   	boolean rightDone = false;
-   	
-   	boolean leftDone = false;
-   	
-   	double pow;
-   	
-   	/**
-   	 * @param d how far to move.  Accepts negative values.
-   	 * @param kP The konstant of proportion.  Scales how the feedback affects the wheel speeds.
-   	 * @param msec How long the move should take. If set to 0, do not time the move
-   	 */
-       public CmdMoveStraightForward(double d, double kP, int msec, double pow)
-       {
-       	_cm = d;
-       	
-       	_msec = msec;
-       	
-       	this.kP = kP;
-       	
-   		enc = abs(cmToEncDegrees(_cm));
-   		int norm = (int) RobotMath.sgn(_cm);
-   		this.pow = norm * pow;
-       }
-
-       protected void initialize()
-       {
-   		clearEncoders();
-   		startTime = System.currentTimeMillis();
-   		
-   		leftMotors.setTarget(pow); //both sides start at the same power
-   		rightMotors.setTarget(pow);
-       }
-
-       // Called repeatedly when this Command is scheduled to run
-       protected void execute()
-       {
-       	//P calculation
-       	double error = encLeft.getAngularSpeed() -  encRight.getAngularSpeed();
-       	pow += kP * error;
-       	pow += kD * lastError;
-       	
-       	lastError = error;
-       	
-   		rightMotors.setTarget(pow);
-
-   		if(_msec != 0 && System.currentTimeMillis() - startTime >_msec)
-   		{
-   			stopMovement();
-   			AutoUtils.killRobot("Move Overtime");
-   		}
-       }
-
-       // Make this return true when this Command no longer needs to run execute()
-       protected boolean isFinished()
-       {
-       	leftDone = Math.abs(encLeft.getAngle()) > enc;
-       	rightDone = Math.abs(encRight.getAngle()) > enc;
-       	
-           return leftDone || rightDone;
-       }
-
-       // Called once after isFinished returns true
-       protected void end()
-       {
-   		stopMovement();
-
-       	Log.debug("CmdMoveStraightForward", "The right side went at " + ((encRight.getAngle() * 100.0) / encRight.getAngle()) + "% of the left side");
-       }
-
-       // Called when another command which requires one or more of the same
-       // subsystems is scheduled to run
-       protected void interrupted()
-       {
-       	
-       }
-   }
    
 }

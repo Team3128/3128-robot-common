@@ -1,20 +1,19 @@
-package org.team3128.common.hardware.encoder.angular;
+package org.team3128.common.hardware.encoder.distance;
+
+import org.team3128.common.util.units.Angle;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 
 
 /**
- * Interfaces with magnetic angular encoders.
- * 
- * The ones we used in 2013-2014 are not very reliable, though,
- * so you may want to reconsider using them.
- * @author Jamie
+ * Interfaces with magnetic angular encoders,
+ * like the ones we used in the 2014 season. 
  *
  */
-public class MagneticPotentiometerEncoder implements IAngularEncoder
+public class MagneticPotentiometerEncoder implements IDistanceEncoder
 {
     private AnalogInput enc;
-    private final double offset;
+    private double offset;
    
     public MagneticPotentiometerEncoder(int port)
     {
@@ -46,7 +45,7 @@ public class MagneticPotentiometerEncoder implements IAngularEncoder
         }
         
         voltage /= 10;
-        return (voltage/5.0*360.0)+offset;
+        return (voltage/5.0*Angle.ROTATIONS)+offset;
     }
 
     /**
@@ -59,6 +58,12 @@ public class MagneticPotentiometerEncoder implements IAngularEncoder
 	public boolean canRevolveMultipleTimes()
 	{
 		return true;
+	}
+
+	@Override
+	public void reset()
+	{
+		offset = getAngle();
 	}
 }
 

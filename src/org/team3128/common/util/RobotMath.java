@@ -7,6 +7,8 @@ import org.team3128.common.util.units.Angle;
 /**
 *
 * @author Noah Sutton-Smolin
+* 
+* Reorganized and optimized! Not original code, but same api... -morebytes
 */
 public class RobotMath {
    /**
@@ -19,8 +21,7 @@ public class RobotMath {
     */
    public static double normalizeAngle(double angle)
    {
-       double theta = ((angle % 360) + 360) % 360;
-       return theta;
+       return ((angle % 360) + 360) % 360;
    }
 
    //TODO: many of these functions exist in Java's Math class now that we aren't using Java ME
@@ -34,15 +35,14 @@ public class RobotMath {
     */
    public static double angleDistance(double angle1, double angle2, boolean shortWay)
    {
-       double dist = normalizeAngle(angle2) - normalizeAngle(angle1);
+       double retval = normalizeAngle(angle2) - normalizeAngle(angle1);
        
-       if(shortWay && Math.abs(dist) > 180)
+       if(shortWay && Math.abs(retval) > 180)
        {
-           double sgn = RobotMath.sgn(dist);
-           return -sgn * (360 - Math.abs(dist));
+           retval = -(RobotMath.sgn(retval)) * (360 - Math.abs(retval));
        }
        
-       return dist;
+       return retval;
    }
 
    
@@ -53,23 +53,23 @@ public class RobotMath {
     */
    public static double sgn(double n)
    {
-	   if(n == 0)
+	   if(n != 0)
 	   {
-		   return 0;
+		   n = Math.abs(n) / n;
 	   }
 	   
-       return Math.abs(n) / n;
+       return n;
    
    }
    
    public static int sgn(int n)
    {
-	   if(n == 0)
+	   if(n != 0)
 	   {
-		   return 0;
+		   n = Math.abs(n) / n;
 	   }
 	   
-       return Math.abs(n) / n;
+       return n;
    }
   
 
@@ -84,12 +84,18 @@ public class RobotMath {
     */
    public static MotorDir getMotorDirToTarget(double currentAngle, double targetAngle, boolean shortWay) 
    {
+	   MotorDir retval;
+	   
        currentAngle = RobotMath.normalizeAngle(currentAngle);
        targetAngle = RobotMath.normalizeAngle(targetAngle);
-       int retDir = 1 * ((shortWay && Math.abs(currentAngle - targetAngle) > 180 )? 1 : -1) * (currentAngle - targetAngle < 0 ? -1 : 1);
+       int difference = ((shortWay && Math.abs(currentAngle - targetAngle) > 180 ) ? 1 : -1) * (currentAngle - targetAngle < 0 ? -1 : 1);
 
-       if (Math.abs(currentAngle - targetAngle) < .001) return MotorDir.NONE;
-       return (retDir == 1 ? MotorDir.CW : MotorDir.CCW);
+       if (Math.abs(currentAngle - targetAngle) < .001)
+    	   retval = MotorDir.NONE;
+       else
+    	   retval = (difference == 1) ? MotorDir.CW : MotorDir.CCW;
+       
+       return retval;
    }
 
    /**
@@ -127,7 +133,7 @@ public class RobotMath {
 	 * @param d
 	 */
 	public static double clampPosNeg1(double d) {
-		clamp(d, -1, 1);
+		d = clamp(d, -1, 1);
 		return d;
 	}
    
@@ -141,40 +147,18 @@ public class RobotMath {
 	 */
 	public static double thresh(double value, double threshold)
 	{
+		double retval;
+		
 		if(Math.abs(value) < Math.abs(threshold))
 		{
-			return 0;
+			retval = 0;
 		}
-		return value;
-	}
-	
-	/**
-	 * If the abs value of the number is less than the threshold, return 0, otherwise return the number
-	 * @param value
-	 * @param threshold
-	 * @return
-	 */
-	public static float threshold(float value, float threshold)
-	{
-		if(Math.abs(value) < Math.abs(threshold))
+		else
 		{
-			return 0;
+			retval = value;
 		}
-		return value;
-	}
-	
-	
-	/**
-	 * Converts linear distance to angular.
-	 * 
-	 * For example, if a wheel was touching a surface, and the surface moved x cm, then the wheel turned LinearDistToAngular(x) degrees.
-	 * @param cm
-	 * @param wheelCircumference the circumference of the circle
-	 * @return
-	 */
-	public static double LinearDistToAngular(double d, double circumference)
-	{
-		return (360 / circumference) * d;
+		
+		return retval;
 	}
 	
 	/**
@@ -257,13 +241,31 @@ public class RobotMath {
 	 */
 	public static int intPow(int number, int power)
 	{
-		int result = 1;
+		int retval = 1;
+		
 		for(; power >= 1; --power)
 		{
-			result *= number;
+			retval *= number;
 		}
 		
-		return result;
+		return retval;
+	}
+	
+	/**
+	 * Raises a double to a integer power >= 0.
+	 * 
+	 * More lightweight than the regular function, but also more restricted.  Negative powers are treated as 0.
+	 */
+	public static double intPow(double number, int power)
+	{
+		double retval = 1;
+		
+		for(; power >= 1; --power)
+		{
+			retval *= number;
+		}
+		
+		return retval;
 	}
 	
 	/**
@@ -274,14 +276,14 @@ public class RobotMath {
 	 */
 	public static int round(double d)
 	{
-		long roundedLong = Math.round(d);
+		d = Math.round(d);
 		
-		if(Math.abs(roundedLong) > Integer.MAX_VALUE)
+		if(Math.abs(d) > Integer.MAX_VALUE)
 		{
 			throw new IllegalArgumentException("Provided number is too large to be an integer!");
 		}
-		
-		return (int)roundedLong;
+				
+		return (int)d;
 	}
 	
 	/**
@@ -316,13 +318,14 @@ public class RobotMath {
 	 */
 	public static int ceil(double d) 
 	{
-		double ceilinged = Math.ceil(d);
-		if(!Double.isFinite(ceilinged) || ceilinged > Integer.MAX_VALUE)
+		d = Math.ceil(d);
+		
+		if(!Double.isFinite(d) || d > Integer.MAX_VALUE)
 		{
 			throw new IllegalArgumentException("The provided double cannot be represented by an int");
 		}
 		
-		return (int)ceilinged;
+		return (int)d;
 	}
 	
 	/**
@@ -333,14 +336,14 @@ public class RobotMath {
 	 */
 	public static int floor(double d)
 	{
-		double floored = Math.floor(d);
+		d = Math.floor(d);
 		   
-		if(!Double.isFinite(floored) || floored > Integer.MAX_VALUE)
+		if(!Double.isFinite(d) || d > Integer.MAX_VALUE)
 		{
 			throw new IllegalArgumentException("The provided double cannot be represented by an int");
 		}
 		   
-		return (int)floored;
+		return (int)d;
 	}
 	
 	/**
@@ -400,3 +403,4 @@ public class RobotMath {
 	}
 
 }
+

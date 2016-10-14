@@ -1,6 +1,6 @@
 package org.team3128.common.hardware.motor.logic;
 
-import org.team3128.common.hardware.encoder.angular.IAngularEncoder;
+import org.team3128.common.hardware.encoder.distance.IDistanceEncoder;
 import org.team3128.common.hardware.motor.MotorLogic;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
@@ -14,7 +14,7 @@ import org.team3128.common.util.RobotMath;
 public class AbsolutePIDAngleLogic extends MotorLogic
 {
     private double targetAngle, threshold;
-    private IAngularEncoder _encoder;
+    private IDistanceEncoder _encoder;
     
     private int consecutiveCorrectPositions = 0;
     
@@ -37,7 +37,7 @@ public class AbsolutePIDAngleLogic extends MotorLogic
      * @param stopWhenDone whether to stop controlling the motor when it's reached its target
      * @param encoder
      */
-    public AbsolutePIDAngleLogic(double kP, double kI, double kD, double threshold, boolean stopWhenDone, IAngularEncoder encoder, boolean log)
+    public AbsolutePIDAngleLogic(double kP, double kI, double kD, double threshold, boolean stopWhenDone, IDistanceEncoder encoder, boolean log)
     {
     	_refreshTime = 10;
         
