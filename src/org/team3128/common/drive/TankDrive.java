@@ -259,14 +259,14 @@ public class TankDrive
     		leftMotors.setTarget(RobotMath.sgn(leftDist) * power);
     		rightMotors.setTarget(RobotMath.sgn(rightDist) * power);
     		
-    		Log.debug("CmdMoveDistance", "left: " + leftDist + ", right: " + (RobotMath.sgn(rightDist) * power));
+    		Log.debug("CmdMoveDistance", "left: " + leftDist + ", right: " + rightDist);
         }
 
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-        	boolean leftDone = leftDist == 0  || encLeft.getAngle() >= leftDist;
-        	boolean rightDone = rightDist == 0  || encRight.getAngle() >= rightDist;
+        	boolean leftDone = leftDist == 0  || Math.abs(encLeft.getAngle()) >= Math.abs(leftDist);
+        	boolean rightDone = rightDist == 0  || Math.abs(encRight.getAngle()) >= Math.abs(rightDist);
         	
         	if(isTimedOut())
         	{

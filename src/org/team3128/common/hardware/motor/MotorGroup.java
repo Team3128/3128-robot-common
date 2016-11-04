@@ -26,6 +26,7 @@ public class MotorGroup
     private MotorLogic motorLogic;
     private boolean motorReversed = false;
     private double speedScalar = 1;
+    private double target;
 
     public MotorGroup()
     {
@@ -88,6 +89,7 @@ public class MotorGroup
     	this.speedScalar = powScl;
     }
     
+    
     /**
      * Get the speed scalar.
      * @param powScl
@@ -140,6 +142,8 @@ public class MotorGroup
      */
     public void setTarget(double target)
     {
+    	this.target = target;
+    	
         if(motorLogic == null)
         {
         	 setInternalSpeed(target);
@@ -152,6 +156,15 @@ public class MotorGroup
         }
 
         this.motorLogic.setControlTarget(target);
+    }
+    
+    /**
+     * Get the target of the MotorGroup
+     * @return
+     */
+    public double getTarget()
+    {
+    	return target;
     }
 
     /**
