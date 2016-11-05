@@ -66,7 +66,7 @@
      destdir="${build.dir}"
      includeAntRuntime="no"
      includeJavaRuntime="no"
-     classpath="${classpath}:${userLibs}"
+     classpath="${classpath}:${userLibs}:${commonLibs}"
      target="${ant.java.version}"
      source="${ant.java.version}"
      compiler="javac${ant.java.version}"
@@ -77,7 +77,7 @@
   	     destdir="${build.dir}"
   	     includeAntRuntime="no"
   	     includeJavaRuntime="no"
-  	     classpath="${classpath}:${userLibs}"
+  	     classpath="${classpath}:${userLibs}:${commonLibs}"
   	     target="${ant.java.version}"
   	     source="${ant.java.version}"
   	     compiler="javac${ant.java.version}"
@@ -98,7 +98,7 @@
   <echo>[athena-jar] Copying jars from ${classpath}:${userLibs} to ${build.jars}.</echo>
   <copy todir="${build.jars}" flatten="true">
     <path>
-    <pathelement path="${classpath}:${userLibs}"/>
+    <pathelement path="${classpath}:${userLibs}:${commonLibs}"/>
     </path>
   </copy>
 
@@ -117,10 +117,6 @@
     </jar>
   </target>
 
-    <!-- We're running a clean here to get around a known ant issue where it does not detected changed constant variables.
-     To get around this, we're recompiling the entire project, which is not an issue for most teams. If this is an issue
-     for you, you can remove the clean here, just be sure to do a full rebuild after you've changed any constants.
-     Reference: http://stackoverflow.com/questions/6430001/ant-doesnt-recompile-constants -->
   <target name="deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running.">
     <echo>[athena-deploy] Copying code over.</echo>
     <scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>

@@ -316,7 +316,7 @@ public abstract class NarwhalRobot extends RobotBase
 			e.printStackTrace();
 		}
 		
-		//System.exit(7);
+		System.exit(7);
 	}
 	
 	private void setupAutoChooser()
