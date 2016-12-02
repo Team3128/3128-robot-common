@@ -73,6 +73,8 @@ public class NarwhalVisionReceiver
 			{
 				setMostRecentTarget(kryo.readObject(packetReader, TargetInformation.class));
 				setLastPacketReceivedTime(System.currentTimeMillis());
+				
+				Log.debug("NarwhalVisionReceiver", "Got a target information packet: " + mostRecentTarget);
 			}
 			catch(ClassCastException ex)
 			{

@@ -11,21 +11,23 @@ package org.team3128.narwhalvision;
 public class TargetInformation
 {
 	// NOTE: these are kept public to give the serializer an easier time
-	// we also use floats so we don't send an unneccessary anount of precision
+	// we also use floats so we don't send an unneccessary amount of precision
 
-	float area;
-	float boundingRectLeft;
-	float boundingRectTop;
-	float boundingRectRight;
-	float boundingRectBottom;
+	public float area;
+	public float boundingRectLeft;
+	public float boundingRectTop;
+	public float boundingRectRight;
+	public float boundingRectBottom;
+	
+	//NOTE: these are pixel coordinates, so the origin is in the top left of the image
 
-	float boundingRectHeight, boundingRectWidth;
+	public float boundingRectHeight, boundingRectWidth;
 
-	float boundingRectCenterX, boundingRectCenterY;
+	public float boundingRectCenterX, boundingRectCenterY;
 
-	int imageWidth, imageHeight;
+	public int imageWidth, imageHeight;
 
-	float horizontalFOV, verticalFOV;
+	public float horizontalFOV, verticalFOV;
 
 	/**
 	 * Blank constructor for serializer
@@ -71,7 +73,7 @@ public class TargetInformation
 	{
 		float distanceFromCenter = boundingRectCenterX - imageWidth / 2.0F;
 
-		return (float) Math.toDegrees(Math.atan(distanceFromCenter * Math.tan(Math.toRadians(horizontalFOV)) / imageWidth));
+		return (float) Math.toDegrees(Math.atan(2 * distanceFromCenter * Math.tan(Math.toRadians(horizontalFOV / 2.0F)) / imageWidth));
 	}
 
 	/**
@@ -93,5 +95,11 @@ public class TargetInformation
 		float distanceFromCenter = boundingRectCenterY - imageHeight / 2.0F;
 
 		return (float) Math.toDegrees(Math.atan(distanceFromCenter * Math.tan(Math.toRadians(horizontalFOV)) / imageWidth));
+	}
+	
+	public String toString()
+	{
+		return String.format("TargetInformation: height: %.02f, width: %.02f, center coordinates: (%.02f, %.02f)",
+				boundingRectHeight, boundingRectWidth, boundingRectCenterX, boundingRectCenterY);
 	}
 }

@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="lib/kryo-4.0.0.jar"/>
 	<classpathentry kind="lib" path="lib/minlog-info-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/objenesis-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/reflectasm-1.09-all.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

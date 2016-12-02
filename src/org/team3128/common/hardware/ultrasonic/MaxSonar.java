@@ -60,7 +60,7 @@ public class MaxSonar implements IUltrasonic
 	 * 
 	 * @param rangingPinDIONumber The DIO pin that the ranging pin on the ultrasonic is connected to.
 	 * @param resolution The resolution from the of the sensor as described by the MaxBotix website.  The MB1013 is mm, and the MB1010 is inch.
-	 * @param portToUse which serial port to use.  Note that if using onboard, you will need to disable the console out in the webpage.
+	 * @param portToUse which serial port to use.  Note that if using the onboard serial port, you will need to disable the console out in the RoboRIO webpage.
 	 */
 	public MaxSonar(int rangingPinDIONumber, Resolution res, Port portToUse)
 	{
@@ -197,7 +197,8 @@ public class MaxSonar implements IUltrasonic
 
 	@Override
 	/**
-	 * According to the datasheet, pinging the sensor this way 
+	 * According to the datasheet, pinging the sensor manually
+	 * reduces its accuracy
 	 */
 	public void setAutoPing(boolean autoPing)
 	{

@@ -148,7 +148,7 @@
 
   </target>
 
-  <target name="debug-deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running.">
+  <target name="debug-deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running in debug mode on port 8348.">
     <echo>[athena-deploy] Copying code over.</echo>
     <scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>
   	<!-- The remoteDebugCommand file is used by /usr/local/frc/bin/frcRunRobot.sh on the roboRIO  -->
