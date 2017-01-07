@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="team3128-common" default="deploy">
-
+	
   <property file="${common-library}/ant/build.properties"/>
   <!-- Load Tasks -->
   <taskdef resource="net/sf/antcontrib/antlib.xml">
@@ -17,6 +17,14 @@
     <delete dir="${dist.dir}"/>
   </target>
 
+ 	<!--dependencies of the team3128 common library.  Must be specified here because paths cannot be created in a properties file.-->
+	<path id="commonLibs">
+		<fileset file="${common-library}/lib/kryo-4.0.0.jar"/>
+		<fileset file="${common-library}/lib/minlog-info-1.2.jar"/>
+		<fileset file="${common-library}/lib/objenesis-2.4.jar"/>
+		<fileset file="${common-library}/lib/reflectasm-1.09-all.jar"/>
+	</path>
+	
   <!-- Targets -->
 
   <target name="get-target-ip">
@@ -62,29 +70,39 @@
 	<property name="userLibs" value=""/>
     <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} with classpath=${classpath}:${userLibs} to ${build.dir}</echo>
 
-    <javac srcdir="${common-src.dir}"
-     destdir="${build.dir}"
-     includeAntRuntime="no"
-     includeJavaRuntime="no"
-     classpath="${classpath}:${userLibs}:${commonLibs}"
-     target="${ant.java.version}"
-     source="${ant.java.version}"
-     compiler="javac${ant.java.version}"
-     debug="true">
+	<path id="classpath.path">
+		<fileset dir="${userLibs.dir}" includes="*.jar"/>
+		<fileset file="${wpilib.jar}"/>
+		<fileset file="${networktables.jar}"/>
+		<fileset file="${opencv.jar}"/>
+		<fileset file="${cscore.jar}"/>
+		<path refid="commonLibs"/>
+		<fileset dir="${userLibs}" erroronmissingdir="false"/>
+	</path>
+
+    <pathconvert property="classpathProp" refid="classpath.path"/>
+
+  	<javac srcdir="${common-src.dir}"
+	     destdir="${build.dir}"
+	     includeAntRuntime="no"
+	     includeJavaRuntime="no"
+  	     classpathref="classpath.path"
+	     target="${ant.java.version}"
+	     source="${ant.java.version}"
+	     compiler="javac${ant.java.version}"
+	     debug="true">
     </javac>
   	
   	<javac srcdir="${robot-program-src.dir}"
   	     destdir="${build.dir}"
   	     includeAntRuntime="no"
   	     includeJavaRuntime="no"
-  	     classpath="${classpath}:${userLibs}:${commonLibs}"
+  	     classpathref="classpath.path"
   	     target="${ant.java.version}"
   	     source="${ant.java.version}"
   	     compiler="javac${ant.java.version}"
   	     debug="true">
   		<classpath>
-  			<pathelement path="${classpath}"/>
-  			<pathelement path="${userLibs}"/>
   			<pathelement location="${build.dir}"/>
   		</classpath>
   	</javac>
@@ -95,12 +113,13 @@
     <mkdir dir="${dist.dir}" />
     <mkdir dir="${build.jars}" />
 
-  <echo>[athena-jar] Copying jars from ${classpath}:${userLibs} to ${build.jars}.</echo>
-  <copy todir="${build.jars}" flatten="true">
-    <path>
-    <pathelement path="${classpath}:${userLibs}:${commonLibs}"/>
-    </path>
-  </copy>
+	<echo>[athena-jar] Copying jars from ${classpath}:${userLibs} to ${build.jars}.</echo>
+	<copy todir="${build.jars}" flatten="true">
+		<path>
+			<pathelement path="${classpath}:${userLibs}"/>
+			<path refid="commonLibs"/>
+		</path>
+	</copy>
 
     <jar destfile="${dist.jar}" update="false">
 		<manifest>
@@ -118,19 +137,54 @@
   </target>
 
   <target name="deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running.">
+    <deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}" libs.deployDir="${libDeploy.dir}">
+      <libs.local>
+        <fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
+          <include name="libHALAthena.so"/>
+          <include name="libntcore.so"/>
+          <include name="libwpiutil.so"/>
+          <include name="libopencv*.so.3.1"/>
+          <include name="libcscore.so"/>
+          <include name="libopencv_java310.so"/>
+          <include name="libwpilibJavaJNI.so"/>
+        </fileset>
+      </libs.local>
+    </deploy-libs>
+  	
+    <deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}" libs.deployDir="${libDeploy.dir}">
+      <libs.local>
+        <fileset dir="${userLibs.dir}">
+          <include name="**/*.so"/>
+        </fileset>
+      </libs.local>
+    </deploy-libs>
+        	
     <echo>[athena-deploy] Copying code over.</echo>
     <scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>
+    <sshexec host="${target}"
+         username="${adminUsername}"
+         password="${password}"
+         trust="true"
+         command="ldconfig" />
 
      <!-- Suppress the exit status so that if no netconsole was running then
           it doesn't show up red on the output. -->
-      <sshexec host="${target}"
-               username="admin"
-               password="${password}"
-               trust="true"
-               failonerror="false"
-               command="killall -q netconsole-host || :"/>
+     <sshexec host="${target}"
+          username="admin"
+          password="${password}"
+          trust="true"
+          failonerror="false"
+          command="killall -q netconsole-host || :"/>
+  	
+    <deploy-libs libs.name="netconsole-host" libs.basedir="${wpilib.ant.dir}" libs.deployDir="/usr/local/frc/bin">
+      <libs.local>
+        <fileset id="netconsole.local" dir="${wpilib.ant.dir}">
+          <include name="netconsole-host"/>
+        </fileset>
+      </libs.local>
+    </deploy-libs>
 
-      <scp file="${wpilib.ant.dir}/robotCommand" todir="${username}@${target}:${command.dir}" password="${password}" trust="true"/>
+    <scp file="${wpilib.ant.dir}/robotCommand" todir="${username}@${target}:${command.dir}" password="${password}" trust="true"/>
 
     <echo>[athena-deploy] Starting program.</echo>
     <sshexec host="${target}"
@@ -149,6 +203,21 @@
   </target>
 
   <target name="debug-deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running in debug mode on port 8348.">
+  	<deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}">
+      <libs.local>
+        <fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
+          <include name="**/*.so"/>
+        </fileset>
+      </libs.local>
+    </deploy-libs>
+
+    <deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}">
+      <libs.local>
+        <fileset dir="${userLibs.dir}">
+          <include name="**/*.so"/>
+        </fileset>
+      </libs.local>
+    </deploy-libs>
     <echo>[athena-deploy] Copying code over.</echo>
     <scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>
   	<!-- The remoteDebugCommand file is used by /usr/local/frc/bin/frcRunRobot.sh on the roboRIO  -->
@@ -172,26 +241,30 @@
   </target>
 
   <target name="dependencies" depends="get-target-ip">
-    <property name="ant.enable.asserts" value="true"/>
-	<post to="http://${target}/nisysapi/server" logfile="sysProps.xml" verbose="false" encoding="UTF-16LE" append="false">
-		<prop name="Function" value="GetPropertiesOfItem"/>
-		<prop name="Plugins" value="nisyscfg"/>
-		<prop name="Items" value="system"/>
-	</post>
-	<loadfile srcFile="sysProps.xml" encoding="UTF-16LE" property="roboRIOSysValues"/>
-	<propertyregex property="roboRIOImage" input="${roboRIOSysValues}" regexp="FRC_roboRIO_2016_v([0-9]+)" select="\1" defaultValue="ImageRegExFail"/>
-	<assert message="roboRIO Image does not match plugin, allowed image version: ${roboRIOAllowedImages}">
-		<bool>
-			<contains string="${roboRIOAllowedImages}" substring="${roboRIOImage}"/>
-		</bool>
-	</assert>
-	<echo>roboRIO image version validated</echo>
-	<echo>Checking for JRE. If this fails install the JRE using these instructions: https://wpilib.screenstepslive.com/s/4485/m/13503/l/288822-installing-java-8-on-the-roborio-using-the-frc-roborio-java-installer-java-only</echo>
-	<sshexec host="${target}"
-        username="${username}"
-        password="${password}"
-        trust="true"
-		failonerror="true"
-        command="test -d ${roboRIOJRE.dir}"/>
-  </target>
+		<property name="ant.enable.asserts" value="true"/>
+		<post to="http://${target}/nisysapi/server" logfile="sysProps.xml" verbose="false" encoding="UTF-16LE" append="false">
+			<prop name="Function" value="GetPropertiesOfItem"/>
+			<prop name="Plugins" value="nisyscfg"/>
+			<prop name="Items" value="system"/>
+		</post>
+		<loadfile srcFile="sysProps.xml" encoding="UTF-16LE" property="roboRIOSysValues"/>
+		<propertyregex property="roboRIOImage" input="${roboRIOSysValues}" regexp="FRC_roboRIO_[0-9]+_v([0-9]+)" select="\1" defaultValue="ImageRegExFail"/>
+		<propertyregex property="roboRIOImageYear" input="${roboRIOSysValues}" regexp="FRC_roboRIO_([0-9]+)_v" select="\1" defaultValue="ImageRegExFail"/>
+		<assert message="Image of roboRIO does not match plugin. ${line.separator}Allowed image year: ${roboRIOAllowedYear} version: ${roboRIOAllowedImages}. ${line.separator}Actual image year: ${roboRIOImageYear} version ${roboRIOImage}. ${line.separator}RoboRIO needs to be re-imaged or plugins updated.">
+			<bool>
+				<and>
+					<contains string="${roboRIOAllowedImages}" substring="${roboRIOImage}"/>
+					<contains string="${roboRIOAllowedYear}" substring="${roboRIOImageYear}"/>
+				</and>
+			</bool>
+		</assert>
+		<echo>roboRIO image version validated</echo>
+		<echo>Checking for JRE. If this fails install the JRE using these instructions: https://wpilib.screenstepslive.com/s/4485/m/13503/l/288822-installing-java-8-on-the-roborio-using-the-frc-roborio-java-installer-java-only</echo>
+		<sshexec host="${target}"
+		    username="${username}"
+		    password="${password}"
+		    trust="true"
+			failonerror="true"
+		    command="test -d ${roboRIOJRE.dir}"/>
+  	</target>
 </project>

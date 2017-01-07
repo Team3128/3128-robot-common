@@ -8,5 +8,8 @@
 	<classpathentry kind="lib" path="lib/minlog-info-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/objenesis-2.4.jar"/>
 	<classpathentry kind="lib" path="lib/reflectasm-1.09-all.jar"/>
+	<classpathentry kind="lib" path="hardwareLibs/TalonSRXLibJava.jar"/>
+	<classpathentry kind="var" path="opencv" sourcepath="opencv.sources"/>
+	<classpathentry kind="var" path="cscore" sourcepath="cscore.sources"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

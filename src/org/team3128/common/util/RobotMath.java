@@ -126,6 +126,35 @@ public class RobotMath {
 	   return Math.min(Math.max(value, minimum), maximum); 
    }
    
+   /**
+    * Clamps value from (inclusive) minimum to maximum (template function version)
+    * @param value
+    * @param minimum
+    * @param maximum
+    * @return
+    */
+   public static <T extends Comparable<T>> T clamp(T value, T minimum, T maximum)
+   {
+	   if(!(minimum.compareTo(maximum) < 0))
+	   {
+		   Log.recoverable("RobotMath", "...what?  clampInt() called with insane arguments");
+		   return value;
+	   }
+	   
+	   if(minimum.compareTo(value) > 0)
+	   {
+		   return minimum;
+	   }
+	   else if(maximum.compareTo(value) < 0)
+	   {
+		   return maximum;
+	   }
+	   else
+	   {
+		   return value;
+	   }
+   }
+   
 	/**
 	 * Clamps value between positive and negative 1 and returns value.
 	 * 

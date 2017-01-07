@@ -10,10 +10,9 @@ import org.team3128.common.util.Log;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.Scheduler;
-import edu.wpi.first.wpilibj.communication.FRCNetworkCommunicationsLibrary;
-import edu.wpi.first.wpilibj.communication.FRCNetworkCommunicationsLibrary.tInstances;
-import edu.wpi.first.wpilibj.communication.FRCNetworkCommunicationsLibrary.tResourceType;
-import edu.wpi.first.wpilibj.communication.UsageReporting;
+import edu.wpi.first.wpilibj.hal.FRCNetComm.tInstances;
+import edu.wpi.first.wpilibj.hal.FRCNetComm.tResourceType;
+import edu.wpi.first.wpilibj.hal.HAL;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -122,7 +121,7 @@ public abstract class NarwhalRobot extends RobotBase
 	
 	public void startCompetition()
 	{
-	    UsageReporting.report(tResourceType.kResourceType_Framework, tInstances.kFramework_Iterative);
+	    HAL.report(tResourceType.kResourceType_Framework, tInstances.kFramework_Iterative);
         LiveWindow.setEnabled(false);
 
         // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -167,7 +166,7 @@ public abstract class NarwhalRobot extends RobotBase
         // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         
         // Tell the DS that the robot is ready to be enabled
-        FRCNetworkCommunicationsLibrary.FRCNetworkCommunicationObserveUserProgramStarting();
+        HAL.observeUserProgramStarting();
         // loop forever, calling the appropriate mode-dependent function
         
         //long lastLoopStartTime;
@@ -203,7 +202,7 @@ public abstract class NarwhalRobot extends RobotBase
 					testInitialized = false;
 				}
 				if (nextPeriodReady()) {
-					FRCNetworkCommunicationsLibrary.FRCNetworkCommunicationObserveUserProgramDisabled();
+					HAL.observeUserProgramDisabled();
 					disabledPeriodic();
 				}
 			} else if (isTest()) {
@@ -218,7 +217,7 @@ public abstract class NarwhalRobot extends RobotBase
 					disabledInitialized = false;
 				}
 				if (nextPeriodReady()) {
-					FRCNetworkCommunicationsLibrary.FRCNetworkCommunicationObserveUserProgramTest();
+					HAL.observeUserProgramTest();
 					testPeriodic();
 				}
 			} else if (isAutonomous()) {
@@ -245,7 +244,7 @@ public abstract class NarwhalRobot extends RobotBase
 			        Log.info("NarwhalRobot", "Auto Initialization Done!");
 				}
 				//I claim we don't need to wait for new control data, we can just go
-				FRCNetworkCommunicationsLibrary.FRCNetworkCommunicationObserveUserProgramAutonomous();
+				HAL.observeUserProgramAutonomous();
 				Scheduler.getInstance().run();
 				autonomousPeriodic();
 				
@@ -272,7 +271,7 @@ public abstract class NarwhalRobot extends RobotBase
 				}
 				if (nextPeriodReady()) 
 				{
-					FRCNetworkCommunicationsLibrary.FRCNetworkCommunicationObserveUserProgramTeleop();
+					HAL.observeUserProgramTeleop();
 					tickListenerManagers();
 					teleopPeriodic();
 				}

@@ -5,7 +5,8 @@ import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 
-import edu.wpi.first.wpilibj.CANTalon;
+import com.ctre.CANTalon;
+
 import edu.wpi.first.wpilibj.command.Command;
 
 /**
