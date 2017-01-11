@@ -1,7 +1,7 @@
 package org.team3128.common.autonomous.movement;
 
 import org.team3128.common.drive.TankDrive;
-import org.team3128.common.util.Log;
+import org.team3128.common.util.PIDCalculator;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
 
@@ -33,17 +33,13 @@ public class CmdTurnGyro extends Command {
 		
 	double threshold;
 		
-	static final int NUM_AVERAGES = 10;
 	static final double OUTPUT_POWER_LIMIT = .5; //maximum allowed output power
 	
 	private Gyro gyro;
 	
 	private TankDrive drivetrain;
 	
-	private PIDConstants pidConstants;
-	
-	double prevError = 0;
-	double[] rollingAverage = new double[NUM_AVERAGES];
+	private PIDCalculator pidCalc;
 	
 	//index of the next element to be replaced
 	int backOfAverageArray = 0;
@@ -55,8 +51,10 @@ public class CmdTurnGyro extends Command {
     	
     	this.threshold = threshold;
     	this.gyro = gyro;
-    	this.pidConstants = pidConstants;
+    	this.pidCalc = new PIDCalculator(pidConstants, 10, threshold);
     	this.drivetrain = drivetrain;
+    	
+    	pidCalc.setTarget(degrees);
     }
 
     protected void initialize()
@@ -68,42 +66,17 @@ public class CmdTurnGyro extends Command {
     protected void execute()
     {
 		
-		double error = gyro.getAngle() - degrees;
-		
-		//calculate average (limited integral / I parameter)
-		double average = 0;
-		
-		//add error to averaging array
-		rollingAverage[backOfAverageArray] = error;
-		
-		++backOfAverageArray;
-		if(backOfAverageArray >= NUM_AVERAGES)
-		{
-			backOfAverageArray = 0;
-		}
-		
-		for(int index = 0; index < NUM_AVERAGES; ++index)
-		{
-			average += rollingAverage[index];
-		}
-		
-		average /= NUM_AVERAGES;
-		
-        double output = -1 * (error * pidConstants.kP + average * pidConstants.kI + pidConstants.kD * (error - prevError));
+		double output = pidCalc.update(gyro.getAngle());
         
         output = RobotMath.clamp(output, -OUTPUT_POWER_LIMIT, OUTPUT_POWER_LIMIT);
-        
-        prevError = error;
-        
-        Log.debug("CmdTurnGyro", "Error: " + error + " deg, Output: " + output + ", Average: " + average);
-		drivetrain.tankDrive(-output, output);
+   		drivetrain.tankDrive(-output, output);
 		
     }
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished()
     {
-    	return Math.abs(gyro.getAngle() - degrees) < threshold && Math.abs(prevError) < threshold;
+    	return pidCalc.getNumUpdatesInsideThreshold() >= 2;
     }
 
     // Called once after isFinished returns true

@@ -3,7 +3,7 @@ package org.team3128.common.autonomous.movement;
 import org.team3128.common.autonomous.AutoUtils;
 import org.team3128.common.drive.TankDrive;
 import org.team3128.common.hardware.ultrasonic.IUltrasonic;
-import org.team3128.common.util.Log;
+import org.team3128.common.util.PIDCalculator;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
 
@@ -33,25 +33,17 @@ public class CmdMoveUltrasonic extends Command {
 	double _cm;
 	
 	int _msec;
-	
-	double _threshold;
-	
+		
 	long startTime;
 	
-	static final int NUM_AVERAGES = 5;
 	static final double OUTPUT_POWER_LIMIT = .4; //maximum allowed output power
 	
 	IUltrasonic ultrasonic;
 	
 	TankDrive drivetrain;
 	
-	PIDConstants pidConstants;
+	PIDCalculator pidCalc;
 	
-	double prevError = 0;
-	double[] rollingAverage;
-	
-	//index of the next element to be replaced
-	int backOfAverageArray = 0;
 	/**
 	 * @param cm how far on the ultrasonic to move.
 	 * @param threshold acceptible threshold from desired distance in cm
@@ -67,14 +59,13 @@ public class CmdMoveUltrasonic extends Command {
     	}
     	
     	_msec = msec;
-    	
-    	_threshold = threshold;
-    	
+    	    	
     	this.ultrasonic = ultrasonic;
-    	this.pidConstants = pidConstants;
+    	
     	this.drivetrain = drivetrain;
     	
-    	rollingAverage = new double[NUM_AVERAGES];
+    	pidCalc = new PIDCalculator(pidConstants, 10, threshold);
+    	pidCalc.setTarget(cm);
     }
 
     protected void initialize()
@@ -95,55 +86,17 @@ public class CmdMoveUltrasonic extends Command {
 			AutoUtils.killRobot("Ultrasonic Move Overtime");
 		}
 		
-		double error = ultrasonic.getDistance() - _cm;
-		
-		rollingAverage[backOfAverageArray] = error;
-		
-		++backOfAverageArray;
-		if(backOfAverageArray >= NUM_AVERAGES)
-		{
-			backOfAverageArray = 0;
-		}
-		
-		//calculate average (limited integral / I parameter)
-		double averageSum = 0;
-		
-		for(int index = 0; index < NUM_AVERAGES; ++index)
-		{
-			averageSum += rollingAverage[index];
-		}
-		
-		
-        double output = error * pidConstants.kP + averageSum * pidConstants.kI + pidConstants.kD * (error - prevError);
-		
-        if(Math.abs(output) > .4)
-        {
-        	int prevIndex = backOfAverageArray - 1;
-        	
-        	if(prevIndex < 0)
-        	{
-        		prevIndex = NUM_AVERAGES - 1;
-        	}
-        	
-        	//if this output was too high, remove it from the history.
-        	rollingAverage[prevIndex] = 0;
-        	
-        	output = RobotMath.sgn(output) * OUTPUT_POWER_LIMIT;
-        }
-        
+        double output = pidCalc.update(ultrasonic.getDistance());
+
         output = RobotMath.clamp(output, -OUTPUT_POWER_LIMIT, OUTPUT_POWER_LIMIT);
-        
-        
-        prevError = error;
-        
-        Log.debug("CmdMoveUltrasonic", "Error: " + error + " Output: " + output);
-		drivetrain.tankDrive(output, output);
+  		drivetrain.tankDrive(output, output);
 		
 		//sensor reads every 500ms
 		try
 		{
 			Thread.sleep(495);
-		} catch (InterruptedException e) 
+		} 
+		catch (InterruptedException e) 
 		{
 			e.printStackTrace();
 		}
@@ -153,26 +106,7 @@ public class CmdMoveUltrasonic extends Command {
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished()
     {
-    	
-    	int errorsInTolerance = 0;
-        for(int index = 0; index < NUM_AVERAGES; ++index)
-        {
-        	if(rollingAverage[index] != 0)
-        	{
-	        	if(Math.abs(rollingAverage[index]) < _threshold)
-	        	{
-	        		++errorsInTolerance;
-	        	}
-	        	
-	        	if(errorsInTolerance >= 2)
-	            {
-	            	return true;
-	            }
-
-        	}
-        }
-        
-        return false;
+    	return pidCalc.getNumUpdatesInsideThreshold() >= 2;
     }
 
     // Called once after isFinished returns true
