@@ -1,12 +1,12 @@
 package org.team3128.common.util.datatypes;
 
 
-/*
+/**
  * 
  * Circular queue with a fixed size.
  * Supports random access.
  * The first element enqueued has index zero, and enqueueing another element will increment existing elements' indexes by 1.
- * Enqueue()ing more than size elements will overwrite the highest-index element.
+ * enqueue()ing more than size elements will overwrite the highest-index element.
  * 
  * This class copyright (c) Jamie Smith
  */
@@ -61,7 +61,7 @@ public class RandomAccessBuffer<T>
 	 * 
 	 * If the buffer is full, this shifts it backward. 
 	 * 
-	 * In other words, the element at the end will be removed, all other elements will have their indexes decremented by 1, and this element will be added at index 0.
+	 * In other words, the element at the end will be removed, all other elements will have their indexes incremented by 1, and this element will be added at index 0.
 	 * @param element
 	 */
     public void enqueue(T element)

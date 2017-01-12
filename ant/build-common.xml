@@ -2,24 +2,24 @@
 
 <project name="team3128-common" default="deploy">
 	
-  <property file="${user.home}/wpilib/java/${version}/ant/ni_image.properties"/>
+	<property file="${user.home}/wpilib/java/${version}/ant/ni_image.properties"/>
 
-  <property file="${common-library}/ant/build.properties"/>
-  <!-- Load Tasks -->
-  <taskdef resource="net/sf/antcontrib/antlib.xml">
-    <classpath>
-      <pathelement location="${wpilib.ant.dir}/ant-contrib.jar"/>
-    </classpath>
-  </taskdef>
-  <taskdef resource="net/jtools/classloadertask/antlib.xml" classpath="${classloadertask.jar}"/>
-  <classloader loader="system" classpath="${jsch.jar}"/>
+	<property file="${common-library}/ant/build.properties"/>
+	<!-- Load Tasks -->
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="${wpilib.ant.dir}/ant-contrib.jar"/>
+		</classpath>
+	</taskdef>
+	<taskdef resource="net/jtools/classloadertask/antlib.xml" classpath="${classloadertask.jar}"/>
+	<classloader loader="system" classpath="${jsch.jar}"/>
 
-  <target name="clean" description="Clean up all build and distribution artifacts.">
-    <delete dir="${build.dir}"/>
-    <delete dir="${dist.dir}"/>
-  </target>
+	<target name="clean" description="Clean up all build and distribution artifacts.">
+		<delete dir="${build.dir}"/>
+		<delete dir="${dist.dir}"/>
+	</target>
 
- 	<!--dependencies of the team3128 common library.  Must be specified here because paths cannot be created in a properties file.-->
+	<!--dependencies of the team3128 common library.  Must be specified here because paths cannot be created in a properties file.-->
 	<path id="commonLibs">
 		<fileset file="${common-library}/lib/kryo-4.0.0.jar"/>
 		<fileset file="${common-library}/lib/minlog-info-1.2.jar"/>
@@ -36,13 +36,13 @@
 		<path refid="commonLibs"/>
 		<fileset dir="${userLibs}" erroronmissingdir="false"/>
 	</path>
-  <!-- Targets -->
+	<!-- Targets -->
 
-  <target name="get-target-ip">
-    <property name="ant.enable.asserts" value="true"/>
-  	
+	<target name="get-target-ip">
+		<property name="ant.enable.asserts" value="true"/>
+		
 	<assert name="team-number" exists="true" message="Team number not set. Go to Window->Preferences->WPILib Preferences to set it."/>
-    <property name="target" value="roboRIO-${team-number}-FRC.local" />
+		<property name="target" value="roboRIO-${team-number}-FRC.local" />
 	<echo>Trying Target: ${target}</echo>
 	 <if>
 		<isreachable host="${target}" timeout="5"/>
@@ -74,171 +74,169 @@
 		</if>
 	  </else>
 	 </if>
-  </target>
+	</target>
 
-  <target name="compile" description="Compile the source code.">
-    <mkdir dir="${build.dir}"/>
-	<property name="userLibs" value=""/>
-    <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} with classpath=${classpath}:${userLibs} to ${build.dir}</echo>
+	<target name="compile" description="Compile the source code.">
+		<mkdir dir="${build.dir}"/>
+		<property name="userLibs" value=""/>
+		<echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} with classpath=${classpath}:${userLibs} to ${build.dir}</echo>
 
-    <pathconvert property="classpathProp" refid="classpath.path"/>
+		<pathconvert property="classpathProp" refid="classpath.path"/>
 
-  	<javac srcdir="${common-src.dir}"
-	     destdir="${build.dir}"
-	     includeAntRuntime="no"
-	     includeJavaRuntime="no"
-  	     classpathref="classpath.path"
-	     target="${ant.java.version}"
-	     source="${ant.java.version}"
-	     compiler="javac${ant.java.version}"
-	     debug="true">
-    </javac>
-  	
-  	<javac srcdir="${robot-program-src.dir}"
-  	     destdir="${build.dir}"
-  	     includeAntRuntime="no"
-  	     includeJavaRuntime="no"
-  	     classpathref="classpath.path"
-  	     target="${ant.java.version}"
-  	     source="${ant.java.version}"
-  	     compiler="javac${ant.java.version}"
-  	     debug="true">
-  		<classpath>
-  			<pathelement location="${build.dir}"/>
-  		</classpath>
-  	</javac>
-  </target>
+		<javac srcdir="${common-src.dir}"
+			destdir="${build.dir}"
+			includeAntRuntime="no"
+			includeJavaRuntime="no"
+			classpathref="classpath.path"
+			target="${ant.java.version}"
+			source="${ant.java.version}"
+			compiler="javac${ant.java.version}"
+			debug="true"/>
+		
+		<javac srcdir="${robot-program-src.dir}"
+		    destdir="${build.dir}"
+		    includeAntRuntime="no"
+		    includeJavaRuntime="no"
+		    classpathref="classpath.path"
+		    target="${ant.java.version}"
+		    source="${ant.java.version}"
+		    compiler="javac${ant.java.version}"
+		    debug="true">
+			<classpath>
+				<pathelement location="${build.dir}"/>
+			</classpath>
+		</javac>
+	</target>
 
 	<target name="jar" depends="compile">
 	    <echo>[athena-jar] Making jar ${dist.jar}.</echo>
 	    <mkdir dir="${dist.dir}" />
 	    <mkdir dir="${build.jars}" />
 
-	  <echo>[athena-jar] Copying jars to ${build.jars}.</echo>
-	  <copy todir="${build.jars}" flatten="true">
-	    <path refid="classpath.path"/>
-	  </copy>
+		<echo>[athena-jar] Copying jars to ${build.jars}.</echo>
+		<copy todir="${build.jars}" flatten="true">
+			<path refid="classpath.path"/>
+		</copy>
 
-	  <jar destfile="${dist.jar}" update="false">
-	      <manifest>
-	    	<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
-	    	<attribute name="Robot-Class" value="${robot.class}"/>
-	    	<attribute name="Class-Path" value="."/>
-	      </manifest>
+		<jar destfile="${dist.jar}" update="false">
+			<manifest>
+				<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
+				<attribute name="Robot-Class" value="${robot.class}"/>
+				<attribute name="Class-Path" value="."/>
+			</manifest>
 
-	      <fileset dir="${build.dir}" includes="**/*.class"/>
+			<fileset dir="${build.dir}" includes="**/*.class"/>
 
-		<zipgroupfileset dir="${build.jars}">
-		  <include name="**/*.jar" />
-		</zipgroupfileset>
+			<zipgroupfileset dir="${build.jars}">
+			  <include name="**/*.jar" />
+			</zipgroupfileset>
 	    </jar>
-	  </target>
+	</target>
 
-  <target name="deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running.">
-    <deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}" libs.deployDir="${libDeploy.dir}">
-      <libs.local>
-        <fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
-          <include name="libHALAthena.so"/>
-          <include name="libntcore.so"/>
-          <include name="libwpiutil.so"/>
-          <include name="libopencv*.so.3.1"/>
-          <include name="libcscore.so"/>
-          <include name="libopencv_java310.so"/>
-          <include name="libwpilibJavaJNI.so"/>
-        </fileset>
-      </libs.local>
-    </deploy-libs>
-  	
-    <deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}" libs.deployDir="${libDeploy.dir}">
-      <libs.local>
-        <fileset dir="${userLibs.dir}">
-          <include name="**/*.so"/>
-        </fileset>
-      </libs.local>
-    </deploy-libs>
-        	
-    <echo>[athena-deploy] Copying code over.</echo>
-    <scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>
-    <sshexec host="${target}"
-         username="${adminUsername}"
-         password="${password}"
-         trust="true"
-         command="ldconfig" />
+	<target name="deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running.">
+		<deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}" libs.deployDir="${libDeploy.dir}">
+			<libs.local>
+				<fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
+					<include name="libHALAthena.so"/>
+					<include name="libntcore.so"/>
+					<include name="libwpiutil.so"/>
+					<include name="libopencv*.so.3.1"/>
+					<include name="libcscore.so"/>
+					<include name="libopencv_java310.so"/>
+					<include name="libwpilibJavaJNI.so"/>
+				</fileset>
+			</libs.local>
+		</deploy-libs>
+		
+		<deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}" libs.deployDir="${libDeploy.dir}">
+			<libs.local>
+				<fileset dir="${userLibs.dir}">
+					<include name="**/*.so"/>
+				</fileset>
+			</libs.local>
+		</deploy-libs>
+					
+		<echo>[athena-deploy] Copying code over.</echo>
+		<scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>
+		<sshexec host="${target}"
+			username="${adminUsername}"
+			password="${password}"
+			trust="true"
+			command="ldconfig" />
 
-     <!-- Suppress the exit status so that if no netconsole was running then
-          it doesn't show up red on the output. -->
-     <sshexec host="${target}"
-          username="admin"
-          password="${password}"
-          trust="true"
-          failonerror="false"
-          command="killall -q netconsole-host || :"/>
-  	
-    <deploy-libs libs.name="netconsole-host" libs.basedir="${wpilib.ant.dir}" libs.deployDir="/usr/local/frc/bin">
-      <libs.local>
-        <fileset id="netconsole.local" dir="${wpilib.ant.dir}">
-          <include name="netconsole-host"/>
-        </fileset>
-      </libs.local>
-    </deploy-libs>
+		 <!-- Suppress the exit status so that if no netconsole was running then it doesn't show up red on the output. -->
+		 <sshexec host="${target}"
+			username="admin"
+			password="${password}"
+			trust="true"
+			failonerror="false"
+			command="killall -q netconsole-host || :"/>
+		
+		<deploy-libs libs.name="netconsole-host" libs.basedir="${wpilib.ant.dir}" libs.deployDir="/usr/local/frc/bin">
+			<libs.local>
+				<fileset id="netconsole.local" dir="${wpilib.ant.dir}">
+					<include name="netconsole-host"/>
+				</fileset>
+			</libs.local>
+		</deploy-libs>
 
-    <scp file="${wpilib.ant.dir}/robotCommand" todir="${username}@${target}:${command.dir}" password="${password}" trust="true"/>
+		<scp file="${wpilib.ant.dir}/robotCommand" todir="${username}@${target}:${command.dir}" password="${password}" trust="true"/>
 
-    <echo>[athena-deploy] Starting program.</echo>
-    <sshexec host="${target}"
-       username="${username}"
-       password="${password}"
-       trust="true"
-	   failonerror="false"
-       command="${deploy.kill.command};"/>
+		<echo>[athena-deploy] Starting program.</echo>
+		<sshexec host="${target}"
+			username="${username}"
+			password="${password}"
+			trust="true"
+			failonerror="false"
+			command="${deploy.kill.command};"/>
 
-    <sshexec host="${target}"
-         username="${username}"
-         password="${password}"
-         trust="true"
-         command="sync" />
+		<sshexec host="${target}"
+			username="${username}"
+			password="${password}"
+			trust="true"
+			command="sync" />
 
-  </target>
+	</target>
 
-  <target name="debug-deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running in debug mode on port 8348.">
-  	<deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}">
-      <libs.local>
-        <fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
-          <include name="**/*.so"/>
-        </fileset>
-      </libs.local>
-    </deploy-libs>
+	<target name="debug-deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running in debug mode on port 8348.">
+		<deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}">
+			<libs.local>
+				<fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
+					<include name="**/*.so"/>
+				</fileset>
+			</libs.local>
+		</deploy-libs>
 
-    <deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}">
-      <libs.local>
-        <fileset dir="${userLibs.dir}">
-          <include name="**/*.so"/>
-        </fileset>
-      </libs.local>
-    </deploy-libs>
-    <echo>[athena-deploy] Copying code over.</echo>
-    <scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>
-  	<!-- The remoteDebugCommand file is used by /usr/local/frc/bin/frcRunRobot.sh on the roboRIO  -->
-    <scp file="${wpilib.ant.dir}/robotDebugCommand" todir="${username}@${target}:${command.dir}" password="${password}" trust="true"/>
-  	<!-- The frcdebug file is used as a flag for /usr/local/frc/bin/frcRunRobot.sh to run the robot program in debug mode -->
-  	<scp file="${wpilib.ant.dir}/frcdebug" todir="${username}@${target}:${debug.flag.dir}" password="${password}" trust="true"/>
-	<sshexec host="${target}"
-        username="${username}"
-        password="${password}"
-        trust="true"
-        command="${debug.flag.command}"/>
+		<deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}">
+			<libs.local>
+				<fileset dir="${userLibs.dir}">
+					<include name="**/*.so"/>
+				</fileset>
+			</libs.local>
+		</deploy-libs>
+		<echo>[athena-deploy] Copying code over.</echo>
+		<scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>
+		<!-- The remoteDebugCommand file is used by /usr/local/frc/bin/frcRunRobot.sh on the roboRIO  -->
+		<scp file="${wpilib.ant.dir}/robotDebugCommand" todir="${username}@${target}:${command.dir}" password="${password}" trust="true"/>
+		<!-- The frcdebug file is used as a flag for /usr/local/frc/bin/frcRunRobot.sh to run the robot program in debug mode -->
+		<scp file="${wpilib.ant.dir}/frcdebug" todir="${username}@${target}:${debug.flag.dir}" password="${password}" trust="true"/>
+		<sshexec host="${target}"
+			username="${username}"
+			password="${password}"
+			trust="true"
+			command="${debug.flag.command}"/>
 
-    <echo>[athena-deploy] Starting Debug program.</echo>
-    <sshexec host="${target}"
-        username="${username}"
-        password="${password}"
-        trust="true"
-		failonerror="false"
-        command="${deploy.kill.command}"/>
+		<echo>[athena-deploy] Starting Debug program.</echo>
+		<sshexec host="${target}"
+			username="${username}"
+			password="${password}"
+			trust="true"
+			failonerror="false"
+			command="${deploy.kill.command}"/>
 
-  </target>
+	</target>
 
-  <target name="dependencies" depends="get-target-ip">
+	<target name="dependencies" depends="get-target-ip">
 		<property name="ant.enable.asserts" value="true"/>
 		<post to="http://${target}/nisysapi/server" logfile="sysProps.xml" verbose="false" encoding="UTF-16LE" append="false">
 			<prop name="Function" value="GetPropertiesOfItem"/>
@@ -264,58 +262,57 @@
 		    trust="true"
 			failonerror="true"
 		    command="test -d ${roboRIOJRE.dir}"/>
-  	</target>
+	</target>
 	
 	<!-- libs.name should not contain spaces as it is used to name a file -->
-	  <macrodef name="deploy-libs">
-	    <attribute name="libs.name"/>
-	    <attribute name="libs.basedir"/>
-	    <attribute name="libs.deployDir"/>
-	    <element name="libs.local"/>
+	<macrodef name="deploy-libs">
+		<attribute name="libs.name"/>
+		<attribute name="libs.basedir"/>
+		<attribute name="libs.deployDir"/>
+		<element name="libs.local"/>
 	    <sequential>
-	      <local name="libs.local.notEmpty"/>
-	      <local name="libs.local.checksum"/>
-	      <local name="libs.deployed.checksum"/>
-	      <local name="libs.local.modified.property"/>
+			<local name="libs.local.notEmpty"/>
+			<local name="libs.local.checksum"/>
+			<local name="libs.deployed.checksum"/>
+			<local name="libs.local.modified.property"/>
 
-	      <delete file="@{libs.basedir}/@{libs.name}.properties"/>
-	      <scp file="${adminUsername}@${target}:@{libs.deployDir}/@{libs.name}.properties"
-	           todir="@{libs.basedir}"
-	           password="${adminPassword}"
-	           trust="true"
-	           failonerror="false"/>
-	      <restrict id="libs.local.modified">
-	        <libs.local/>
-	        <modified update="true"
-	                  seldirs="true"
-	                  cache="propertyfile"
-	                  algorithm="digest"
-	                  comparator="equal">
-	          <param name="cache.cachefile" value="@{libs.basedir}/@{libs.name}.properties"/>
-	          <param name="algorithm.algorithm" value="MD5"/>
-	        </modified>
-	      </restrict>
+			<delete file="@{libs.basedir}/@{libs.name}.properties"/>
+			<scp file="${adminUsername}@${target}:@{libs.deployDir}/@{libs.name}.properties"
+				todir="@{libs.basedir}"
+				password="${adminPassword}"
+				trust="true"
+				failonerror="false"/>
+			<restrict id="libs.local.modified">
+				<libs.local/>
+				<modified update="true"
+					seldirs="true"
+					cache="propertyfile"
+					algorithm="digest"
+					comparator="equal">
+				<param name="cache.cachefile" value="@{libs.basedir}/@{libs.name}.properties"/>
+				<param name="algorithm.algorithm" value="MD5"/>
+				</modified>
+			</restrict>
 
-	      <pathconvert refid="libs.local.modified" property="libs.local.modified.property" pathsep="," setonempty="false">
-	        <globmapper from="@{libs.basedir}/*" to="*" handledirsep="true" />
-	      </pathconvert>
+	    <pathconvert refid="libs.local.modified" property="libs.local.modified.property" pathsep="," setonempty="false">
+			<globmapper from="@{libs.basedir}/*" to="*" handledirsep="true" />
+		</pathconvert>
 
-	      <if>
-	        <isset property="libs.local.modified.property"/>
-	        <then>
-	          <echo message="Deploying libraries ${line.separator} ${libs.local.modified.property}"/>
-	          <scp todir="${adminUsername}@${target}:@{libs.deployDir}"
-	               password="${adminPassword}"
-	               trust="true">
-	            <fileset dir="@{libs.basedir}" includes="${libs.local.modified.property}"/>
-	            <fileset file="@{libs.basedir}/@{libs.name}.properties"/>
-	          </scp>
-	          <sshexec host="${target}"
-	                   username="${adminUsername}"
-	                   password="${adminPassword}"
-	                   trust="true"
-	                   command="chmod -R +x @{libs.deployDir}"
-	          />
+	    <if>
+			<isset property="libs.local.modified.property"/>
+			<then>
+				<echo message="Deploying libraries ${line.separator} ${libs.local.modified.property}"/>
+				<scp todir="${adminUsername}@${target}:@{libs.deployDir}"
+					password="${adminPassword}"
+					trust="true">
+					<fileset dir="@{libs.basedir}" includes="${libs.local.modified.property}"/>
+					<fileset file="@{libs.basedir}/@{libs.name}.properties"/>
+				</scp>
+				<sshexec host="${target}"
+					username="${adminUsername}"
+					password="${adminPassword}"
+					trust="true"
+	                command="chmod -R +x @{libs.deployDir}"/>
 	        </then>
 	      </if>
 	    </sequential>
