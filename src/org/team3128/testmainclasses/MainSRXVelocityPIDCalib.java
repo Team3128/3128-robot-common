@@ -15,7 +15,7 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 	
 	
 	//change these to match your robot
-	static int CAN_ID = 5;
+	static int CAN_ID = 0;
 	static int ENCODER_CPR_NATIVE_UNITS = 1024 * 4;
 	static double TESTING_MOTOR_POWER = .8;
 	

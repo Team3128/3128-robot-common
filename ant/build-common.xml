@@ -2,6 +2,8 @@
 
 <project name="team3128-common" default="deploy">
 	
+  <property file="${user.home}/wpilib/java/${version}/ant/ni_image.properties"/>
+
   <property file="${common-library}/ant/build.properties"/>
   <!-- Load Tasks -->
   <taskdef resource="net/sf/antcontrib/antlib.xml">
@@ -25,6 +27,15 @@
 		<fileset file="${common-library}/lib/reflectasm-1.09-all.jar"/>
 	</path>
 	
+	<path id="classpath.path">
+		<fileset dir="${userLibs.dir}" includes="*.jar"/>
+		<fileset file="${wpilib.jar}"/>
+		<fileset file="${networktables.jar}"/>
+		<fileset file="${opencv.jar}"/>
+		<fileset file="${cscore.jar}"/>
+		<path refid="commonLibs"/>
+		<fileset dir="${userLibs}" erroronmissingdir="false"/>
+	</path>
   <!-- Targets -->
 
   <target name="get-target-ip">
@@ -70,16 +81,6 @@
 	<property name="userLibs" value=""/>
     <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} with classpath=${classpath}:${userLibs} to ${build.dir}</echo>
 
-	<path id="classpath.path">
-		<fileset dir="${userLibs.dir}" includes="*.jar"/>
-		<fileset file="${wpilib.jar}"/>
-		<fileset file="${networktables.jar}"/>
-		<fileset file="${opencv.jar}"/>
-		<fileset file="${cscore.jar}"/>
-		<path refid="commonLibs"/>
-		<fileset dir="${userLibs}" erroronmissingdir="false"/>
-	</path>
-
     <pathconvert property="classpathProp" refid="classpath.path"/>
 
   	<javac srcdir="${common-src.dir}"
@@ -108,33 +109,30 @@
   	</javac>
   </target>
 
-  <target name="jar" depends="compile">
-    <echo>[athena-jar] Making jar ${dist.jar}.</echo>
-    <mkdir dir="${dist.dir}" />
-    <mkdir dir="${build.jars}" />
+	<target name="jar" depends="compile">
+	    <echo>[athena-jar] Making jar ${dist.jar}.</echo>
+	    <mkdir dir="${dist.dir}" />
+	    <mkdir dir="${build.jars}" />
 
-	<echo>[athena-jar] Copying jars from ${classpath}:${userLibs} to ${build.jars}.</echo>
-	<copy todir="${build.jars}" flatten="true">
-		<path>
-			<pathelement path="${classpath}:${userLibs}"/>
-			<path refid="commonLibs"/>
-		</path>
-	</copy>
+	  <echo>[athena-jar] Copying jars to ${build.jars}.</echo>
+	  <copy todir="${build.jars}" flatten="true">
+	    <path refid="classpath.path"/>
+	  </copy>
 
-    <jar destfile="${dist.jar}" update="false">
-		<manifest>
-			<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
-			<attribute name="Robot-Class" value="${robot.class}"/>
-			<attribute name="Class-Path" value="."/>
-		</manifest>
-		
-		<fileset dir="${build.dir}" includes="**/*.class"/>
+	  <jar destfile="${dist.jar}" update="false">
+	      <manifest>
+	    	<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
+	    	<attribute name="Robot-Class" value="${robot.class}"/>
+	    	<attribute name="Class-Path" value="."/>
+	      </manifest>
+
+	      <fileset dir="${build.dir}" includes="**/*.class"/>
 
 		<zipgroupfileset dir="${build.jars}">
 		  <include name="**/*.jar" />
 		</zipgroupfileset>
-    </jar>
-  </target>
+	    </jar>
+	  </target>
 
   <target name="deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running.">
     <deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}" libs.deployDir="${libDeploy.dir}">
@@ -267,4 +265,59 @@
 			failonerror="true"
 		    command="test -d ${roboRIOJRE.dir}"/>
   	</target>
+	
+	<!-- libs.name should not contain spaces as it is used to name a file -->
+	  <macrodef name="deploy-libs">
+	    <attribute name="libs.name"/>
+	    <attribute name="libs.basedir"/>
+	    <attribute name="libs.deployDir"/>
+	    <element name="libs.local"/>
+	    <sequential>
+	      <local name="libs.local.notEmpty"/>
+	      <local name="libs.local.checksum"/>
+	      <local name="libs.deployed.checksum"/>
+	      <local name="libs.local.modified.property"/>
+
+	      <delete file="@{libs.basedir}/@{libs.name}.properties"/>
+	      <scp file="${adminUsername}@${target}:@{libs.deployDir}/@{libs.name}.properties"
+	           todir="@{libs.basedir}"
+	           password="${adminPassword}"
+	           trust="true"
+	           failonerror="false"/>
+	      <restrict id="libs.local.modified">
+	        <libs.local/>
+	        <modified update="true"
+	                  seldirs="true"
+	                  cache="propertyfile"
+	                  algorithm="digest"
+	                  comparator="equal">
+	          <param name="cache.cachefile" value="@{libs.basedir}/@{libs.name}.properties"/>
+	          <param name="algorithm.algorithm" value="MD5"/>
+	        </modified>
+	      </restrict>
+
+	      <pathconvert refid="libs.local.modified" property="libs.local.modified.property" pathsep="," setonempty="false">
+	        <globmapper from="@{libs.basedir}/*" to="*" handledirsep="true" />
+	      </pathconvert>
+
+	      <if>
+	        <isset property="libs.local.modified.property"/>
+	        <then>
+	          <echo message="Deploying libraries ${line.separator} ${libs.local.modified.property}"/>
+	          <scp todir="${adminUsername}@${target}:@{libs.deployDir}"
+	               password="${adminPassword}"
+	               trust="true">
+	            <fileset dir="@{libs.basedir}" includes="${libs.local.modified.property}"/>
+	            <fileset file="@{libs.basedir}/@{libs.name}.properties"/>
+	          </scp>
+	          <sshexec host="${target}"
+	                   username="${adminUsername}"
+	                   password="${adminPassword}"
+	                   trust="true"
+	                   command="chmod -R +x @{libs.deployDir}"
+	          />
+	        </then>
+	      </if>
+	    </sequential>
+	  </macrodef>
 </project>
