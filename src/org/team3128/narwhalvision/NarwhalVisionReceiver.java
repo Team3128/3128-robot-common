@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 import org.team3128.common.util.Log;
 
@@ -22,7 +23,8 @@ public class NarwhalVisionReceiver
 	
 	private long lastPacketRecvTime = 0;
 	
-	private TargetInformation mostRecentTarget;
+	//make sure to only access through synchronized functions, updated asynchronously
+	private ArrayList<TargetInformation> mostRecentTargets;
 	
 	public NarwhalVisionReceiver()
 	{
@@ -35,12 +37,13 @@ public class NarwhalVisionReceiver
 			e.printStackTrace();
 		}
 		
-		internalThread = new Thread(this::receiveLoop);
-		internalThread.start();
-		
 		kryo = new Kryo();
 		kryo.register(TargetInformation.class);
 		packetReader = new ByteBufferInput();
+		mostRecentTargets = new ArrayList<>();
+		
+		internalThread = new Thread(this::receiveLoop);
+		internalThread.start();
 	}
 	
 	// static buffer used to hold packets/serialized objects
@@ -71,10 +74,11 @@ public class NarwhalVisionReceiver
 			
 			try
 			{
-				setMostRecentTarget(kryo.readObject(packetReader, TargetInformation.class));
+				TargetInformation targetInfo = kryo.readObject(packetReader, TargetInformation.class);
+				onTargetInfoReceived(targetInfo);
 				setLastPacketReceivedTime(System.currentTimeMillis());
 				
-				Log.debug("NarwhalVisionReceiver", "Got a target information packet: " + mostRecentTarget);
+				Log.debug("NarwhalVisionReceiver", "Got a target information packet: " + targetInfo);
 			}
 			catch(ClassCastException ex)
 			{
@@ -107,16 +111,27 @@ public class NarwhalVisionReceiver
 	}
 	
 	/**
-	 * Get the most recent target information sent by the phone
+	 * Get the most recent target information sent by the phone.  Targets are indexed by how closely they fit the criteria; the 0th target is the best match
 	 * @return
 	 */
-	public synchronized TargetInformation getMostRecentTarget()
+	public synchronized TargetInformation[] getMostRecentTargets()
 	{
-		return mostRecentTarget;
+		//make a shallow copy so that when the list is next cleared, it doesn't affect the return value of this method.
+		return (TargetInformation[]) mostRecentTargets.toArray();
 	}
 	
-	private synchronized void setMostRecentTarget(TargetInformation target)
+	private synchronized void onTargetInfoReceived(TargetInformation target)
 	{
-		mostRecentTarget = target;
+		//if the index is 1, clear the list and start over because we are getting data from the next frame
+		if(target.targetRanking == 1)
+		{
+			mostRecentTargets.clear();
+			mostRecentTargets.add(target);
+		}
+		else
+		{
+			mostRecentTargets.add(target);
+		}
 	}
+	
 }

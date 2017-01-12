@@ -28,6 +28,9 @@ public class TargetInformation
 	public int imageWidth, imageHeight;
 
 	public float horizontalFOV, verticalFOV;
+	
+	// position in the list of targets found in this round of searching.  A lower number means that this target matched the criteria better. The best target of each round has index 1.
+	public int targetRanking;
 
 	/**
 	 * Blank constructor for serializer
