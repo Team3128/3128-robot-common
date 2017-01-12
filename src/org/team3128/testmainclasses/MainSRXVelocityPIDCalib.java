@@ -17,7 +17,7 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 	//change these to match your robot
 	static int CAN_ID = 5;
 	static int ENCODER_CPR_NATIVE_UNITS = 1024 * 4;
-	static double TESTING_MOTOR_POWER = .8;
+	static double TESTING_MOTOR_POWER = .5;
 	
 	private enum State
 	{
@@ -36,7 +36,7 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 	
 	// estimated max speed of the motor
 	private double motorMaxRPM;
-	
+		
 	@Override
 	protected void constructHardware() 
 	{
@@ -61,7 +61,7 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 
 	@Override
 	protected void teleopInit() {
-		// TODO Auto-generated method stub
+		testSRX.set(TESTING_MOTOR_POWER);
 
 	}
 
@@ -77,7 +77,6 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 		switch(state)
 		{
 		case TEST_DIR:
-			testSRX.set(TESTING_MOTOR_POWER);
 			Log.info(TAG, "speed: " + testSRX.getSpeed());
 			if(testSRX.getSpeed() > 0)
 			{

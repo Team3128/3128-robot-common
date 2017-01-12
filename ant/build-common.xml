@@ -25,6 +25,16 @@
 		<fileset file="${common-library}/lib/reflectasm-1.09-all.jar"/>
 	</path>
 	
+	<path id="classpath.path">
+		<fileset dir="${userLibs.dir}" includes="*.jar"/>
+		<fileset file="${wpilib.jar}"/>
+		<fileset file="${networktables.jar}"/>
+		<fileset file="${opencv.jar}"/>
+		<fileset file="${cscore.jar}"/>
+		<path refid="commonLibs"/>
+		<fileset dir="${userLibs}" erroronmissingdir="false"/>
+	</path>
+	
   <!-- Targets -->
 
   <target name="get-target-ip">
@@ -69,16 +79,6 @@
     <mkdir dir="${build.dir}"/>
 	<property name="userLibs" value=""/>
     <echo>[athena-compile] Compiling ${common-src.dir} and ${robot-program-src.dir} with classpath=${classpath}:${userLibs} to ${build.dir}</echo>
-
-	<path id="classpath.path">
-		<fileset dir="${userLibs.dir}" includes="*.jar"/>
-		<fileset file="${wpilib.jar}"/>
-		<fileset file="${networktables.jar}"/>
-		<fileset file="${opencv.jar}"/>
-		<fileset file="${cscore.jar}"/>
-		<path refid="commonLibs"/>
-		<fileset dir="${userLibs}" erroronmissingdir="false"/>
-	</path>
 
     <pathconvert property="classpathProp" refid="classpath.path"/>
 

@@ -40,6 +40,17 @@
 
 	<property name="emulatorclasspath" value="${javassist-jar}:${guava-jar}:${reflections-jar}:${frctest-jar}:${javajoystick.jar}:${userLibs}:${commonLibs}"/>
 	
+	<path id="emulatorclasspath">
+		<fileset file="${javassist-jar}"/>
+		<fileset file="${guava-jar}"/>
+		<fileset file="${reflections-jar}"/>
+		<fileset file="${frctest-jar}"/>
+		<fileset file="${javajoystick.jar}"/>
+		<pathelement location="${userLibs}"/>
+		<pathelement location="${commonLibs}"/>
+		<path refid="classpath.path"/>
+	</path>
+
 	<!-- all of the jars needed to run test mode -->
 	<property name="testclasspath" value="${emulatorclasspath}:${robot-code-jar}:${junit.jar}:${ant-junit.jar}:${hamcrest.jar}:${javajoystick.jar}"/>
 	
@@ -96,12 +107,12 @@
 	</target>
 	
 	<target name="runemulator" depends="frctest-emulator-jar" description="Run the robot emulator.">
-		<java fork="true" classname="frctest.EmulatorMain">
+		<java fork="true" classname="frctest.EmulatorMain" classpathref="emulatorclasspath">
+		  <sysproperty key="java.library.path" value="${native-lib-folder}"/>
 		  <classpath>
 		    <pathelement path="${emulatorclasspath}"/>
 		    <pathelement location="${robot-code-jar}"/>
 		  </classpath>
-		  <sysproperty key="java.library.path" value="${native-lib-folder}"/>
 		</java>
 	</target>
 	
@@ -157,7 +168,7 @@
 			 destdir="${emulator-build.dir}"
 			 includeAntRuntime="no"
 			 includeJavaRuntime="no"
-			 classpath="${emulatorclasspath}:${userLibs}"
+	  	     classpathref="emulatorclasspath"
 			 target="${ant.java.version}"
 			 source="${ant.java.version}"
 			 compiler="javac${ant.java.version}"
@@ -168,16 +179,11 @@
 	  	     destdir="${emulator-build.dir}"
 	  	     includeAntRuntime="no"
 	  	     includeJavaRuntime="no"
-	  	     classpath="${emulatorclasspath}:${userLibs}"
+	  	     classpathref="emulatorclasspath"
 	  	     target="${ant.java.version}"
 	  	     source="${ant.java.version}"
 	  	     compiler="javac${ant.java.version}"
 	  	     debug="true">
-	  		<classpath>
-	  			<pathelement path="${emulatorclasspath}"/>
-	  			<pathelement path="${userLibs}"/>
-	  			<pathelement location="${build.dir}"/>
-	  		</classpath>
 	  	</javac>
 	</target>
 </project>
