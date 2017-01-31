@@ -386,6 +386,7 @@ public abstract class NarwhalRobot extends RobotBase
      */
     public void addListenerManager(ListenerManager manager)
     {
+    	Assert.notNull(manager);
     	listenerManagers.add(manager);
     }
     

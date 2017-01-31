@@ -1,7 +1,5 @@
 package org.team3128.common.hardware.misc;
 
-import org.team3128.common.util.Log;
-
 import edu.wpi.first.wpilibj.Solenoid;
 
 
@@ -39,28 +37,28 @@ public class Piston
     {
         solA.set(true);
         solB.set(true);
-        Log.debug(logTag," set to locked state");
+        //Log.debug(logTag," set to locked state");
     }
 
     public void unlockPiston() 
     {
         solA.set(false);
         solB.set(false);
-        Log.debug(logTag, " set to unlocked state");
+        //Log.debug(logTag, " set to unlocked state");
     }
    
     public void setPistonOn()
     {
         solA.set(true ^ this.isInverted);
         solB.set(false ^ this.isInverted);
-        Log.debug(logTag, " set to on state");
+        //Log.debug(logTag, " set to on state");
     }
    
     public void setPistonOff() 
     {
         solA.set(false ^ this.isInverted);
         solB.set(true ^ this.isInverted);
-        Log.debug(logTag, " set to off state");
+        //Log.debug(logTag, " set to off state");
     }
    
     /**
@@ -70,7 +68,7 @@ public class Piston
     {
         solA.set(!solA.get());
         solB.set(!solB.get());
-        Log.debug(logTag, " set to flip-state " + solA.get() + ", " +solB.get());
+        //Log.debug(logTag, " set to flip-state " + solA.get() + ", " +solB.get());
     }
 
 }
