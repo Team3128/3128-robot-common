@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.command.Command;
  * @author Jamie
  *
  */
-public class SRXTankDrive
+public class SRXTankDrive implements ITankDrive
 {
 	private CANTalon leftMotors;
     	
@@ -128,6 +128,7 @@ public class SRXTankDrive
 	 * @param joyY vertical control input
 	 * @param throttle throttle control input scaled between 1 and -1 (-.8 is 10 %, 0 is 50%, 1.0 is 100%)
 	 */
+	@Override
     public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
     {
     	configureForTeleop();
@@ -189,6 +190,7 @@ public class SRXTankDrive
 		rightMotors.setPosition(0);
 	}
 
+	@Override
 	public void stopMovement()
 	{
 		// not sure about the best way to do this

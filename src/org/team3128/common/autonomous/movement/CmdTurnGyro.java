@@ -1,6 +1,6 @@
 package org.team3128.common.autonomous.movement;
 
-import org.team3128.common.drive.TankDrive;
+import org.team3128.common.drive.ITankDrive;
 import org.team3128.common.util.PIDCalculator;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.datatypes.PIDConstants;
@@ -37,14 +37,14 @@ public class CmdTurnGyro extends Command {
 	
 	private Gyro gyro;
 	
-	private TankDrive drivetrain;
+	private ITankDrive drivetrain;
 	
 	private PIDCalculator pidCalc;
 	
 	//index of the next element to be replaced
 	int backOfAverageArray = 0;
 	
-    public CmdTurnGyro(Gyro gyro, TankDrive drivetrain, double degrees, double threshold, PIDConstants pidConstants, int msec)
+    public CmdTurnGyro(Gyro gyro, ITankDrive drivetrain, double degrees, double threshold, PIDConstants pidConstants, int msec)
     {
     	super(msec / 1000.0);
     	this.degrees = degrees;
