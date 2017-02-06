@@ -1,6 +1,7 @@
 package org.team3128.common.drive;
 
 import org.team3128.common.autonomous.AutoUtils;
+import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
@@ -133,10 +134,6 @@ public class SRXTankDrive
     	configureForTeleop();
     	
         double spdL, spdR;
-    	//read joystick values
-    	joyX = RobotMath.thresh(joyX, thresh);
-    	
-    	joyX = RobotMath.thresh(joyY, thresh);
     	
     	if(!fullSpeed)
     	{
@@ -165,7 +162,7 @@ public class SRXTankDrive
     	spdR = RobotMath.clampPosNeg1(joyY + joyX);
     	spdL = RobotMath.clampPosNeg1(joyY - joyX);
     	
-    	//Log.debug("TankDrive", "x1: " + joyX + " throttle: " + throttle + " spdR: " + spdR + " spdL: " + spdL);
+    	Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle + " spdR: " + spdR + " spdL: " + spdL);
 
     	leftMotors.set(spdL);
     	rightMotors.set(spdR);

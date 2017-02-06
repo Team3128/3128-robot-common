@@ -199,21 +199,28 @@
 	</target>
 
 	<target name="debug-deploy" depends="jar,get-target-ip,dependencies" description="Deploy the jar and start the program running in debug mode on port 8348.">
-		<deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}">
+		<deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}" libs.deployDir="${libDeploy.dir}">
 			<libs.local>
 				<fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
-					<include name="**/*.so"/>
+					<include name="libHALAthena.so"/>
+					<include name="libntcore.so"/>
+					<include name="libwpiutil.so"/>
+					<include name="libopencv*.so.3.1"/>
+					<include name="libcscore.so"/>
+					<include name="libopencv_java310.so"/>
+					<include name="libwpilibJavaJNI.so"/>
 				</fileset>
 			</libs.local>
 		</deploy-libs>
 
-		<deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}">
+		<deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}" libs.deployDir="${libDeploy.dir}">
 			<libs.local>
 				<fileset dir="${userLibs.dir}">
 					<include name="**/*.so"/>
 				</fileset>
 			</libs.local>
 		</deploy-libs>
+		
 		<echo>[athena-deploy] Copying code over.</echo>
 		<scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true"/>
 		<!-- The remoteDebugCommand file is used by /usr/local/frc/bin/frcRunRobot.sh on the roboRIO  -->

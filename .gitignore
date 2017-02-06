@@ -9,3 +9,4 @@ bin
 /build-test
 frctest/Robot Code.jar
 frctest/Robot Code.jar
+hardwareLibs/User_Libraries.properties
