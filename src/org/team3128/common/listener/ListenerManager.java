@@ -213,6 +213,7 @@ public class ListenerManager
 	 */
 	public void addMultiListener(TypelessListenerCallback listener, String... names)
 	{
+		Assert.greaterThan(names.length, 0);
 		
 		for(String controlName : names)
 		{

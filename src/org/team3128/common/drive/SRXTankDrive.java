@@ -58,6 +58,11 @@ public class SRXTankDrive implements ITankDrive
      */
     private double gearRatio;
     
+    /**
+     * Inversions for each side of the drive.
+     */
+    private boolean leftInverted, rightInverted;
+    
     public double getGearRatio()
 	{
 		return gearRatio;
@@ -95,6 +100,8 @@ public class SRXTankDrive implements ITankDrive
     	{
     		throw new IllegalArgumentException("Invalid gear ratio");
     	}
+    	
+    	setReversed(false);
     }
 
     private void configureForTeleop()
@@ -163,11 +170,36 @@ public class SRXTankDrive implements ITankDrive
     	spdR = RobotMath.clampPosNeg1(joyY + joyX);
     	spdL = RobotMath.clampPosNeg1(joyY - joyX);
     	
+    	if(leftInverted)
+    	{
+    		spdL *= -1;
+    	}
+    	
+    	if(rightInverted)
+    	{
+    		spdR *= -1;
+    	}
+    	
     	Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle + " spdR: " + spdR + " spdL: " + spdL);
 
     	leftMotors.set(spdL);
     	rightMotors.set(spdR);
     }
+	
+	/**
+	 * Set whether the drive is reversed (switch the side that is inverted).
+	 * By default, the right motors are inverted, and the left are not.
+	 * 
+	 */
+	public void setReversed(boolean reversed)
+	{
+		leftInverted = reversed;
+		rightInverted = !reversed;
+		
+		// this affects closed-loop control only
+		rightMotors.reverseOutput(!reversed);
+		leftMotors.reverseOutput(reversed);
+	}
     
     /**
      * Drive by providing motor powers for each side.
@@ -177,8 +209,8 @@ public class SRXTankDrive implements ITankDrive
     public void tankDrive(double powL, double powR)
     {
     	configureForTeleop();
-    	leftMotors.set(powL);
-    	rightMotors.set(powR);
+    	leftMotors.set((leftInverted ? -1 : 1) * powL);
+    	rightMotors.set((rightInverted ? -1 : 1) * powR);
     }
     
 	public void clearEncoders()
