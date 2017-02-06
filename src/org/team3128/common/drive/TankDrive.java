@@ -21,7 +21,7 @@ import edu.wpi.first.wpilibj.command.Command;
  * @author Jamie
  *
  */
-public class TankDrive
+public class TankDrive implements ITankDrive
 {
 	private MotorGroup leftMotors;
     	
@@ -109,6 +109,7 @@ public class TankDrive
 	 * @param joyY vertical control input
 	 * @param throttle throttle control input scaled between 1 and -1 (-.8 is 10 %, 0 is 50%, 1.0 is 100%)
 	 */
+	@Override
     public void arcadeDrive(double joyX, double joyY, double throttle, boolean fullSpeed)
     {
     	
@@ -156,6 +157,7 @@ public class TankDrive
      * @param powL the left side power.
      * @param powR the right side power.
      */
+	@Override
     public void tankDrive(double powL, double powR)
     {
     	leftMotors.setTarget(powL);
@@ -168,6 +170,7 @@ public class TankDrive
 		encRight.reset();
 	}
 
+	@Override
 	public void stopMovement()
 	{
 		leftMotors.setTarget(0);
@@ -181,6 +184,7 @@ public class TankDrive
 	 * 0 degrees is straight ahead.
 	 * @return
 	 */
+	@Override
 	public double getRobotAngle()
 	{
 		double leftDist = encDistanceToCm(encLeft.getAngle());
