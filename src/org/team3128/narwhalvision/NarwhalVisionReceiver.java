@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.team3128.common.util.Assert;
 import org.team3128.common.util.Log;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
 
 public class NarwhalVisionReceiver
 {
@@ -20,6 +23,7 @@ public class NarwhalVisionReceiver
 	
 	private Kryo kryo;
 	private ByteBufferInput packetReader;
+	private ByteBufferOutput packetWriter;
 	
 	private long lastPacketRecvTime = 0;
 	
@@ -38,8 +42,10 @@ public class NarwhalVisionReceiver
 		}
 		
 		kryo = new Kryo();
-		kryo.register(TargetInformation.class);
+		kryo.register(TargetInformation.class, 0);
+		kryo.register(SwitchSlotCommand.class, 1);
 		packetReader = new ByteBufferInput();
+		packetWriter = new ByteBufferOutput();
 		mostRecentTargets = new ArrayList<>();
 		
 		internalThread = new Thread(this::receiveLoop);
@@ -92,6 +98,41 @@ public class NarwhalVisionReceiver
 			}
 			
 		}
+	}
+	
+	/**
+	 * Sends a command to the phone
+	 */
+	protected void sendCommand(PhoneCommand command)
+	{
+		ByteBuffer serializedBytes = ByteBuffer.allocate(SERIALIZATION_BUFFER_SIZE);
+		packetWriter.setBuffer(serializedBytes);
+
+		kryo.writeClassAndObject(packetWriter, command);
+
+		packetWriter.flush();
+
+		DatagramPacket packet = new DatagramPacket(serializedBytes.array(), SERIALIZATION_BUFFER_SIZE);
+
+		try
+		{
+			visionDataSocket.send(packet);
+		}
+		catch (IOException e)
+		{
+			Log.recoverable(TAG, "Failed to send command to phone: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Change the target data slot in use on the phone
+	 * @param slot
+	 */
+	public void setActiveSlot(int slot)
+	{
+		Assert.inRange(slot, 1, 4);
+		sendCommand(new SwitchSlotCommand(slot));
 	}
 	
 	//these functions are synchronized because they return data set by the thread
