@@ -26,12 +26,22 @@ public class Piston
         this.solA = new Solenoid(solAChannel); 
         this.solB = new Solenoid(solBChannel);
         
-        solA.set(solStateA); solB.set(solStateB);
+        solA.set(solStateA); 
+        solB.set(solStateB);
         
         logTag = String.format("Piston(%d, %d)", solAChannel, solBChannel);
     }
    
-    public void invertPiston() {this.isInverted = !isInverted;}
+    /**
+     * Causes the piston to switch its high and low states.
+     * 
+     * Also calls setPistonInvert()
+     */
+    public void invertPiston() 
+    {
+    	this.isInverted = !isInverted;
+    	setPistonInvert();
+    }
    
     public void lockPiston()
     {
@@ -62,7 +72,7 @@ public class Piston
     }
    
     /**
-     * Swap the piston's current position
+     * Set the piston's position to the opposite of what it currently is
      */
     public void setPistonInvert()
     {

@@ -99,6 +99,8 @@ public class PIDCalculator
 		
 		double derivative = -1 * (error - previousError) / deltaTime;
 		
+		Log.info("PIDCalculator", "" + pastValues.getLastIndex());
+		
 		// add the time segment ending now to the integral
 		pastValues.enqueue(new Pair<Integer, Double>(deltaTime, error));
 		

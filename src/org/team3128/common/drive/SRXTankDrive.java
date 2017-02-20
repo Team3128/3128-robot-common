@@ -289,7 +289,7 @@ public class SRXTankDrive implements ITankDrive
     public class CmdMoveDistance extends Command
     {
     	//when the wheels' angular distance get within this threshold of the correct value, that side is considered done
-    	final static double MOVEMENT_ERROR_THRESHOLD = 45 * Angle.DEGREES; 
+    	final static double MOVEMENT_ERROR_THRESHOLD = 10 * Angle.DEGREES; 
     	
     	protected double power;
     	
@@ -317,18 +317,31 @@ public class SRXTankDrive implements ITankDrive
 
         protected void initialize()
         {
+        	Log.info("CmdMoveDistance", "Initializing");
         	configureForAuto();
     		clearEncoders();
     		
     		leftMotors.set(leftDist / Angle.ROTATIONS);
     		rightMotors.set(rightDist / Angle.ROTATIONS);
+    		
+    		try
+			{
+				Thread.sleep(100);
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
         }
 
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-        	leftDone = leftDist == 0  || RobotMath.abs(leftMotors.getClosedLoopError() * Angle.ROTATIONS) > MOVEMENT_ERROR_THRESHOLD;
-        	rightDone = rightDist == 0  || RobotMath.abs(rightMotors.getClosedLoopError() * Angle.ROTATIONS) > MOVEMENT_ERROR_THRESHOLD;
+        	Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " cle: " + leftMotors.getClosedLoopError() +
+        			", right pos: " + rightMotors.getPosition() + " cle: " + rightMotors.getClosedLoopError());
+
+        	leftDone = leftDist == 0  || RobotMath.abs((leftMotors.getClosedLoopError() / 1024.0) * Angle.ROTATIONS) < MOVEMENT_ERROR_THRESHOLD;
+        	rightDone = rightDist == 0  || RobotMath.abs((rightMotors.getClosedLoopError()/ 1024.0) * Angle.ROTATIONS) < MOVEMENT_ERROR_THRESHOLD;
         	
         	switch(endMode)
         	{
@@ -343,6 +356,8 @@ public class SRXTankDrive implements ITankDrive
         // Called once after isFinished returns true
         protected void end()
         {
+        	Log.info("CmdMoveDistance", "Ending");
+
         	stopMovement();
         	if(isTimedOut())
         	{
