@@ -81,7 +81,7 @@ public class SRXTankDrive implements ITankDrive
      * @param wheelCircumfrence The circumference of the wheel
      * @param gearRatio The gear ratio of the turns of the wheels per turn of the encoder shaft
      * @param wheelBase The distance between the front and back wheel on a side
-     * @param track distance between front and back wheels
+     * @param track distance across between left and right wheels
      */
     public SRXTankDrive(CANTalon leftMotors, CANTalon rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
     {
