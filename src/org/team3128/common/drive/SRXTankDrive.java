@@ -200,6 +200,19 @@ public class SRXTankDrive implements ITankDrive
 		rightMotors.reverseOutput(!reversed);
 		leftMotors.reverseOutput(reversed);
 	}
+	
+	public void setReversedAutonomous(boolean reversed)
+	{
+		// this affects closed-loop control only
+		rightMotors.reverseOutput(!reversed);
+		leftMotors.reverseOutput(reversed);
+	}
+	
+	public void setReversedTeleop(boolean reversed)
+	{
+		leftInverted = reversed;
+		rightInverted = !reversed;
+	}
     
     /**
      * Drive by providing motor powers for each side.
@@ -289,7 +302,7 @@ public class SRXTankDrive implements ITankDrive
     public class CmdMoveDistance extends Command
     {
     	//when the wheels' angular distance get within this threshold of the correct value, that side is considered done
-    	final static double MOVEMENT_ERROR_THRESHOLD = 10 * Angle.DEGREES; 
+    	final static double MOVEMENT_ERROR_THRESHOLD = 5 * Angle.DEGREES; 
     	
     	protected double power;
     	
@@ -397,7 +410,7 @@ public class SRXTankDrive implements ITankDrive
         	super(MoveEndMode.BOTH, 0, 0, power, msec);
         	
         	//this formula is explained on the info repository wiki
-        	double wheelAngularDist = (2 * Math.PI * track) * (degs / 360);
+        	double wheelAngularDist = cmToEncDegrees((2 * Math.PI * track) * (degs / 360));
         	
         	if(dir == Direction.RIGHT)
         	{
