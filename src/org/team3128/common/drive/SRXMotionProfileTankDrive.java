@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.command.Command;
  * @author Jamie
  *
  */
-public class SRXTankDrive implements ITankDrive
+public class SRXMotionProfileTankDrive implements ITankDrive
 {
 	private CANTalon leftMotors;
     	
@@ -82,7 +82,7 @@ public class SRXTankDrive implements ITankDrive
      * @param wheelBase The distance between the front and back wheel on a side
      * @param track distance across between left and right wheels
      */
-    public SRXTankDrive(CANTalon leftMotors, CANTalon rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
+    public SRXMotionProfileTankDrive(CANTalon leftMotors, CANTalon rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
     {
     	this.leftMotors = leftMotors;
     	this.rightMotors = rightMotors;
@@ -118,8 +118,8 @@ public class SRXTankDrive implements ITankDrive
     {
     	if(configuredForTeleop)
     	{
-	    	leftMotors.changeControlMode(CANTalon.TalonControlMode.Position);
-	    	rightMotors.changeControlMode(CANTalon.TalonControlMode.Position);
+	    	leftMotors.changeControlMode(CANTalon.TalonControlMode.MotionProfile);
+	    	rightMotors.changeControlMode(CANTalon.TalonControlMode.MotionProfile);
 	    	
 	    	configuredForTeleop = false;
     	}
@@ -319,7 +319,7 @@ public class SRXTankDrive implements ITankDrive
     	 */
         public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, double power, double timeout)
         {
-        	super(timeout / 1000.0);
+        	super(timeout);
         	
         	this.power = power;
         	this.leftDist = leftDist;
