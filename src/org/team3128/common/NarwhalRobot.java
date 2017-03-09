@@ -230,6 +230,8 @@ public abstract class NarwhalRobot extends RobotBase
 					// "Autonomous_Init()"
 					
 			        Log.info("NarwhalRobot", "Initializing Autonomous...");
+			        //reconstruct auto programs to read parameters from the smart dashboard
+					setupAutoChooser();
 			        
 					//cancel the last inputs to motors and such, so the robot doesn't react suddenly when reenabled.
 					zeroOutListeners();

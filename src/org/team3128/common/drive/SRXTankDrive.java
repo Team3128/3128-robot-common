@@ -301,7 +301,7 @@ public class SRXTankDrive implements ITankDrive
     public class CmdMoveDistance extends Command
     {
     	//when the wheels' angular distance get within this threshold of the correct value, that side is considered done
-    	final static double MOVEMENT_ERROR_THRESHOLD = 5 * Angle.DEGREES; 
+    	final static double MOVEMENT_ERROR_THRESHOLD = 7 * Angle.DEGREES; 
     	
     	protected double power;
     	
@@ -349,8 +349,8 @@ public class SRXTankDrive implements ITankDrive
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-        	Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " cle: " + leftMotors.getClosedLoopError() +
-        			", right pos: " + rightMotors.getPosition() + " cle: " + rightMotors.getClosedLoopError());
+        	//Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " cle: " + leftMotors.getClosedLoopError() +
+        	//		", right pos: " + rightMotors.getPosition() + " cle: " + rightMotors.getClosedLoopError());
 
         	leftDone = leftDist == 0  || RobotMath.abs((leftMotors.getClosedLoopError() / 1024.0) * Angle.ROTATIONS) < MOVEMENT_ERROR_THRESHOLD;
         	rightDone = rightDist == 0  || RobotMath.abs((rightMotors.getClosedLoopError()/ 1024.0) * Angle.ROTATIONS) < MOVEMENT_ERROR_THRESHOLD;
@@ -406,9 +406,9 @@ public class SRXTankDrive implements ITankDrive
     	 * @param degs how far to turn in degrees.  Accepts negative values.
     	 * @param msec How long the move should take. If set to 0, do not time the move.
     	 */
-        public CmdArcTurn(float degs, int msec, double power, Direction dir)
+        public CmdArcTurn(float degs, int msec, Direction dir)
         {
-        	super(MoveEndMode.BOTH, 0, 0, power, msec);
+        	super(MoveEndMode.BOTH, 0, 0, 0, msec);
         	
         	//this formula is explained on the info repository wiki
         	double wheelAngularDist = cmToEncDegrees((2 * Math.PI * track) * (degs / 360));
