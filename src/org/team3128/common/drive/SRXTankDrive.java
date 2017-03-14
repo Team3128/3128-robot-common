@@ -1,5 +1,6 @@
 package org.team3128.common.drive;
 
+import org.team3128.common.util.Assert;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.enums.Direction;
@@ -62,6 +63,16 @@ public class SRXTankDrive implements ITankDrive
      */
     private boolean leftInverted, rightInverted;
     
+    /**
+     * Measured free speed of the robot at 100% throttle
+     */
+    private double robotMaxSpeed;
+    
+    /**
+     * Speed scalar for the left and right wheels.  Affects autonomous and teleop.
+     */
+    private double leftSpeedScalar, rightSpeedScalar;
+    
     public double getGearRatio()
 	{
 		return gearRatio;
@@ -81,8 +92,9 @@ public class SRXTankDrive implements ITankDrive
      * @param gearRatio The gear ratio of the turns of the wheels per turn of the encoder shaft
      * @param wheelBase The distance between the front and back wheel on a side
      * @param track distance across between left and right wheels
+     * @param robotFreeSpeed the measured maximum speed (in RPM) of the robot when it is driving
      */
-    public SRXTankDrive(CANTalon leftMotors, CANTalon rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track)
+    public SRXTankDrive(CANTalon leftMotors, CANTalon rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, double robotFreeSpeed)
     {
     	this.leftMotors = leftMotors;
     	this.rightMotors = rightMotors;
@@ -91,14 +103,24 @@ public class SRXTankDrive implements ITankDrive
     	this.wheelBase = wheelBase;
     	this.track = track;
     	this.gearRatio = gearRatio;
+    	this.robotMaxSpeed = robotFreeSpeed;
     	
     	double turningCircleDiameter = Math.sqrt(RobotMath.square(track) + RobotMath.square(wheelBase)); //pythagorean theorem
     	turningCircleCircumference = turningCircleDiameter * Math.PI;
+    	
+    	leftSpeedScalar = 1;
+    	rightSpeedScalar = 1;
     	
     	if(gearRatio <= 0)
     	{
     		throw new IllegalArgumentException("Invalid gear ratio");
     	}
+    	
+    	// act like battery voltage is always 11V if it is higher
+    	this.leftMotors.DisableNominalClosedLoopVoltage();
+    	this.leftMotors.setNominalClosedLoopVoltage(11.0);
+    	this.rightMotors.DisableNominalClosedLoopVoltage();
+    	this.rightMotors.setNominalClosedLoopVoltage(11.0);
     	
     	setReversed(false);
     }
@@ -118,8 +140,8 @@ public class SRXTankDrive implements ITankDrive
     {
     	if(configuredForTeleop)
     	{
-	    	leftMotors.changeControlMode(CANTalon.TalonControlMode.Position);
-	    	rightMotors.changeControlMode(CANTalon.TalonControlMode.Position);
+	    	leftMotors.changeControlMode(CANTalon.TalonControlMode.MotionMagic);
+	    	rightMotors.changeControlMode(CANTalon.TalonControlMode.MotionMagic);
 	    	
 	    	configuredForTeleop = false;
     	}
@@ -184,6 +206,24 @@ public class SRXTankDrive implements ITankDrive
     	leftMotors.set(spdL);
     	rightMotors.set(spdR);
     }
+	
+	/**
+	 * Set the left speed scalar.  Must be between 0 and 1.
+	 */
+	public void setLeftSpeedScalar(double scalar)
+	{
+		Assert.inRange(scalar, 0, 1);
+		leftSpeedScalar = scalar;
+	}
+	
+	/**
+	 * Set the right speed scalar.  Must be between 0 and 1.
+	 */
+	public void setRightSpeedScalar(double scalar)
+	{
+		Assert.inRange(scalar, 0, 1);
+		rightSpeedScalar = scalar;
+	}
 	
 	/**
 	 * Set whether the drive is reversed (switch the side that is inverted).
@@ -301,7 +341,7 @@ public class SRXTankDrive implements ITankDrive
     public class CmdMoveDistance extends Command
     {
     	//when the wheels' angular distance get within this threshold of the correct value, that side is considered done
-    	final static double MOVEMENT_ERROR_THRESHOLD = 7 * Angle.DEGREES; 
+    	final static double MOVEMENT_ERROR_THRESHOLD = 15 * Angle.DEGREES; 
     	
     	protected double power;
     	
@@ -333,8 +373,19 @@ public class SRXTankDrive implements ITankDrive
         	configureForAuto();
     		clearEncoders();
     		
+    		double leftSpeed = robotMaxSpeed * power * leftSpeedScalar;
+    		double rightSpeed = robotMaxSpeed * power * rightSpeedScalar;
+    		
+    		leftMotors.setMotionMagicCruiseVelocity(leftSpeed);
+    		leftMotors.setMotionMagicAcceleration(leftSpeed*.5);
+    		
+    		rightMotors.setMotionMagicCruiseVelocity(rightSpeed);
+    		rightMotors.setMotionMagicAcceleration(rightSpeed*.5);
+    		
     		leftMotors.set(leftDist / Angle.ROTATIONS);
     		rightMotors.set(rightDist / Angle.ROTATIONS);
+    		
+    		Log.debug("CmdMoveDistance", "Distances: L:" + leftDist + " rot, R: " + rightDist + " rot, Speeds: L: " + leftSpeed + " RPM, R: " + rightSpeed + " RPM");
     		
     		try
 			{
@@ -349,15 +400,17 @@ public class SRXTankDrive implements ITankDrive
         // Make this return true when this Command no longer needs to run execute()
         protected boolean isFinished()
         {
-        	//Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " cle: " + leftMotors.getClosedLoopError() +
-        	//		", right pos: " + rightMotors.getPosition() + " cle: " + rightMotors.getClosedLoopError());
+        	double leftError = leftMotors.getPosition() * Angle.ROTATIONS - leftDist;
+        	double rightError = rightMotors.getPosition() * Angle.ROTATIONS - rightDist;
+        	
+        	Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " err: " + leftError + "deg, right pos: " + rightMotors.getPosition() + " err: " + rightError);
 
-        	leftDone = leftDist == 0  || RobotMath.abs((leftMotors.getClosedLoopError() / 1024.0) * Angle.ROTATIONS) < MOVEMENT_ERROR_THRESHOLD;
-        	rightDone = rightDist == 0  || RobotMath.abs((rightMotors.getClosedLoopError()/ 1024.0) * Angle.ROTATIONS) < MOVEMENT_ERROR_THRESHOLD;
+        	leftDone = leftDist == 0  || RobotMath.abs(leftError) < MOVEMENT_ERROR_THRESHOLD;
+        	rightDone = rightDist == 0  || RobotMath.abs(rightError) < MOVEMENT_ERROR_THRESHOLD;
         	
         	if(isTimedOut())
         	{
-    			Log.recoverable("CmdMoveDistance", "Autonomous Move Overtime");
+    			Log.unusual("CmdMoveDistance", "Autonomous Move Overtime");
     			return true;
         	}
         	
@@ -408,7 +461,7 @@ public class SRXTankDrive implements ITankDrive
     	 */
         public CmdArcTurn(float degs, int msec, Direction dir)
         {
-        	super(MoveEndMode.BOTH, 0, 0, 0, msec);
+        	super(MoveEndMode.BOTH, 0, 0, .5, msec);
         	
         	//this formula is explained on the info repository wiki
         	double wheelAngularDist = cmToEncDegrees((2 * Math.PI * track) * (degs / 360));
