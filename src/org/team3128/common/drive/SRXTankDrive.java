@@ -7,6 +7,7 @@ import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 
 import com.ctre.CANTalon;
+import com.ctre.CANTalon.TalonControlMode;
 
 import edu.wpi.first.wpilibj.command.Command;
 
@@ -72,7 +73,7 @@ public class SRXTankDrive implements ITankDrive
      * Speed scalar for the left and right wheels.  Affects autonomous and teleop.
      */
     private double leftSpeedScalar, rightSpeedScalar;
-    
+        
     public double getGearRatio()
 	{
 		return gearRatio;
@@ -132,19 +133,23 @@ public class SRXTankDrive implements ITankDrive
 	    	leftMotors.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
 	    	rightMotors.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
 	    	
+	    	leftMotors.enableBrakeMode(true);
+	    	rightMotors.enableBrakeMode(true);
+	    	
 	    	configuredForTeleop = true;
     	}
     }
     
     private void configureForAuto()
     {
-    	if(configuredForTeleop)
-    	{
-	    	leftMotors.changeControlMode(CANTalon.TalonControlMode.MotionMagic);
-	    	rightMotors.changeControlMode(CANTalon.TalonControlMode.MotionMagic);
-	    	
-	    	configuredForTeleop = false;
-    	}
+    	// autonomous commands may have changed this stuff, so we always set it
+    	leftMotors.changeControlMode(CANTalon.TalonControlMode.MotionMagic);
+    	rightMotors.changeControlMode(CANTalon.TalonControlMode.MotionMagic);
+    	
+    	leftMotors.enableBrakeMode(true);
+    	rightMotors.enableBrakeMode(true);
+
+    	configuredForTeleop = false;
     }
     
 	//threshold below which joystick movements are ignored.
@@ -302,10 +307,9 @@ public class SRXTankDrive implements ITankDrive
 	/**
 	 * Convert cm of robot movement to encoder movement in degrees
 	 * @param cm
-	 * @param wheelCircumference the circumference of the wheels
 	 * @return
 	 */
-	double cmToEncDegrees(double cm)
+	public double cmToEncDegrees(double cm)
 	{
 		return (cm * 360) / (wheelCircumfrence * gearRatio);
 	}
@@ -313,10 +317,9 @@ public class SRXTankDrive implements ITankDrive
 	/**
 	 * Convert cm of robot movement to encoder rotations
 	 * @param cm
-	 * @param wheelCircumference the circumference of the wheels
 	 * @return
 	 */
-	double encDistanceToCm(double encDistance)
+	public double encDistanceToCm(double encDistance)
 	{
 		return (encDistance / 360) * wheelCircumfrence * gearRatio;
 	}
@@ -341,11 +344,13 @@ public class SRXTankDrive implements ITankDrive
     public class CmdMoveDistance extends Command
     {
     	//when the wheels' angular distance get within this threshold of the correct value, that side is considered done
-    	final static double MOVEMENT_ERROR_THRESHOLD = 15 * Angle.DEGREES; 
+    	final static double MOVEMENT_ERROR_THRESHOLD = 10 * Angle.DEGREES; 
     	
     	protected double power;
     	
     	protected double leftDist, rightDist;
+    	
+    	protected int correctDistanceCount = 0;
     	
     	protected MoveEndMode endMode;
     	
@@ -376,14 +381,26 @@ public class SRXTankDrive implements ITankDrive
     		double leftSpeed = robotMaxSpeed * power * leftSpeedScalar;
     		double rightSpeed = robotMaxSpeed * power * rightSpeedScalar;
     		
-    		leftMotors.setMotionMagicCruiseVelocity(leftSpeed);
-    		leftMotors.setMotionMagicAcceleration(leftSpeed*.5);
-    		
-    		rightMotors.setMotionMagicCruiseVelocity(rightSpeed);
-    		rightMotors.setMotionMagicAcceleration(rightSpeed*.5);
+    		// motion magic does not work well when the distance is 0
+    		if(leftDist == 0)
+    		{
+    			leftMotors.changeControlMode(TalonControlMode.Position);
+    		}
+    		if(rightDist == 0)
+    		{
+    			leftMotors.changeControlMode(TalonControlMode.Position);
+    		}
+
+			leftMotors.setMotionMagicCruiseVelocity(leftSpeed);
+    		leftMotors.setMotionMagicAcceleration(leftSpeed);
     		
     		leftMotors.set(leftDist / Angle.ROTATIONS);
+
+    		rightMotors.setMotionMagicCruiseVelocity(rightSpeed);
+    		rightMotors.setMotionMagicAcceleration(rightSpeed);
+    		
     		rightMotors.set(rightDist / Angle.ROTATIONS);
+		
     		
     		Log.debug("CmdMoveDistance", "Distances: L:" + leftDist + " rot, R: " + rightDist + " rot, Speeds: L: " + leftSpeed + " RPM, R: " + rightSpeed + " RPM");
     		
@@ -414,14 +431,29 @@ public class SRXTankDrive implements ITankDrive
     			return true;
         	}
         	
+        	boolean isInZone;
+        	
         	switch(endMode)
         	{
         	case BOTH:
-        		return leftDone && rightDone;
+        		isInZone = leftDone && rightDone;
+        		break;
         	case EITHER:
         	default:
-        		return leftDone || rightDone;
+        		isInZone = leftDone || rightDone;
+        		break;
         	}
+        	
+        	if(isInZone)
+        	{
+        		++correctDistanceCount;
+        	}
+        	else
+        	{
+        		correctDistanceCount = 0;
+        	}
+        	
+        	return correctDistanceCount > 15;
         }
 
         // Called once after isFinished returns true
