@@ -31,8 +31,8 @@ public class CmdRunInParallel extends CommandGroup {
         {
         	throw new IllegalArgumentException("You must provide at least one command!");
         }
-        addSequential(commands[0]);
-        for(int index = 1; index < commands.length; ++index)
+        //addSequential(commands[0]);
+        for(int index = 0; index < commands.length; ++index)
         {
         	addParallel(commands[index]);
         }

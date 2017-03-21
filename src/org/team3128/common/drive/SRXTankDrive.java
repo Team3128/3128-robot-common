@@ -118,9 +118,7 @@ public class SRXTankDrive implements ITankDrive
     	}
     	
     	// act like battery voltage is always 11V if it is higher
-    	this.leftMotors.DisableNominalClosedLoopVoltage();
     	this.leftMotors.setNominalClosedLoopVoltage(11.0);
-    	this.rightMotors.DisableNominalClosedLoopVoltage();
     	this.rightMotors.setNominalClosedLoopVoltage(11.0);
     	
     	setReversed(false);
