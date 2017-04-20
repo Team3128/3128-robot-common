@@ -26,9 +26,8 @@ import edu.wpi.first.wpilibj.Joystick;
 
 /**
  * This class combines the functions of XControl and ListenerManager from the
- * old robot code. It is constructed with one Joystick object (which,
- * confusingly, seems to be the wpilib metaphor for an entire controller). It
- * polls the controller at a set interval, and invokes listeners whenever a
+ * old robot code. It is constructed with one or more Joystick objects. 
+ * It polls the controller at a set interval, and invokes listeners whenever a
  * control they're attached to has changed (the button listeners are set for
  * either up or down). You may register the same instance of a listener object for as
  * many controls as you like, but it will only be invoked once per polling cycle

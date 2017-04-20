@@ -92,7 +92,7 @@ public class MaxSonar implements IUltrasonic
 	
 	private Pair<Boolean, Integer> getDistanceFromResponse(String response)
 	{
-		//Response looks like "R1024"
+		//Response looks like "R1024\r"
 		if(response == null || response.length() < 2)
 		{
 			Log.recoverable("MaxSonar", "Got bad response from sensor:\"" + (response == null ? "<null>" : response) +  "\"!");

@@ -109,7 +109,7 @@ public class RobotMath {
    {
 	   if(!(minimum <= maximum))
 	   {
-		   Log.debug("RobotMath", "...what?  clampInt() called with insane arguments");
+		   Log.unusual("RobotMath", "...what?  clampInt() called with insane arguments");
 	   }
 	   return Math.min(Math.max(value, minimum), maximum); 
    }
@@ -137,7 +137,7 @@ public class RobotMath {
    {
 	   if(!(minimum.compareTo(maximum) < 0))
 	   {
-		   Log.recoverable("RobotMath", "...what?  clampInt() called with insane arguments");
+		   Log.unusual("RobotMath", "...what?  clampInt() called with insane arguments");
 		   return value;
 	   }
 	   
