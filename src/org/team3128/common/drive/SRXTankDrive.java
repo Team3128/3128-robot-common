@@ -376,8 +376,8 @@ public class SRXTankDrive implements ITankDrive
         	configureForAuto();
     		clearEncoders();
     		
-    		double leftSpeed = robotMaxSpeed * power * leftSpeedScalar;
-    		double rightSpeed = robotMaxSpeed * power * rightSpeedScalar;
+    		double leftSpeed = robotMaxSpeed * power;// * leftSpeedScalar;
+    		double rightSpeed = robotMaxSpeed * power;// * rightSpeedScalar;
     		
     		// motion magic does not work well when the distance is 0
     		if(leftDist == 0)
@@ -400,7 +400,7 @@ public class SRXTankDrive implements ITankDrive
     		rightMotors.set(rightDist / Angle.ROTATIONS);
 		
     		
-    		Log.debug("CmdMoveDistance", "Distances: L:" + leftDist + " rot, R: " + rightDist + " rot, Speeds: L: " + leftSpeed + " RPM, R: " + rightSpeed + " RPM");
+    		Log.debug("CmdMoveDistance", "Distances: L:" + leftDist/Angle.ROTATIONS + " rot, R: " + rightDist/Angle.ROTATIONS + " rot, Speeds: L: " + leftSpeed + " RPM, R: " + rightSpeed + " RPM");
     		
     		try
 			{
@@ -418,7 +418,7 @@ public class SRXTankDrive implements ITankDrive
         	double leftError = leftMotors.getPosition() * Angle.ROTATIONS - leftDist;
         	double rightError = rightMotors.getPosition() * Angle.ROTATIONS - rightDist;
         	
-        	Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " err: " + leftError + "deg, right pos: " + rightMotors.getPosition() + " err: " + rightError);
+        	//Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " err: " + leftError + "deg, right pos: " + rightMotors.getPosition() + " err: " + rightError);
 
         	leftDone = leftDist == 0  || RobotMath.abs(leftError) < MOVEMENT_ERROR_THRESHOLD;
         	rightDone = rightDist == 0  || RobotMath.abs(rightError) < MOVEMENT_ERROR_THRESHOLD;
