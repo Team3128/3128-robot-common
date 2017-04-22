@@ -7,7 +7,6 @@ import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
 
 import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
 
 import edu.wpi.first.wpilibj.command.Command;
 
@@ -355,12 +354,14 @@ public class SRXTankDrive implements ITankDrive
     	boolean leftDone;
     	boolean rightDone;
     	
+    	boolean useScalars;
+    	
     	/**
     	 * @param leftDist Degrees to spin the left wheel
     	 * @param rightDist Degrees to spin the right wheel
     	 * @param power motor power to move at, from 0 to 1
     	 */
-        public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, double power, double timeout)
+        public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, double power, boolean useScalars, double timeout)
         {
         	super(timeout / 1000.0);
         	
@@ -368,6 +369,7 @@ public class SRXTankDrive implements ITankDrive
         	this.leftDist = leftDist;
         	this.rightDist = rightDist;
         	this.endMode = endMode;
+        	this.useScalars = useScalars;
         }
 
         protected void initialize()
@@ -376,18 +378,23 @@ public class SRXTankDrive implements ITankDrive
         	configureForAuto();
     		clearEncoders();
     		
-    		double leftSpeed = robotMaxSpeed * power;// * leftSpeedScalar;
-    		double rightSpeed = robotMaxSpeed * power;// * rightSpeedScalar;
+    		double leftSpeed = robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0);
+    		double rightSpeed = robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0);
+    		
+    		if (useScalars)
+    		{
+    			Log.info("SRXTankDrive", "Using scalars.");
+    		}
     		
     		// motion magic does not work well when the distance is 0
-    		if(leftDist == 0)
-    		{
-    			leftMotors.changeControlMode(TalonControlMode.Position);
-    		}
-    		if(rightDist == 0)
-    		{
-    			leftMotors.changeControlMode(TalonControlMode.Position);
-    		}
+//    		if(leftDist == 0)
+//    		{
+//    			leftMotors.changeControlMode(TalonControlMode.Position);
+//    		}
+//    		if(rightDist == 0)
+//    		{
+//    			leftMotors.changeControlMode(TalonControlMode.Position);
+//    		}
 
 			leftMotors.setMotionMagicCruiseVelocity(leftSpeed);
     		leftMotors.setMotionMagicAcceleration(leftSpeed);
@@ -418,7 +425,7 @@ public class SRXTankDrive implements ITankDrive
         	double leftError = leftMotors.getPosition() * Angle.ROTATIONS - leftDist;
         	double rightError = rightMotors.getPosition() * Angle.ROTATIONS - rightDist;
         	
-        	//Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " err: " + leftError + "deg, right pos: " + rightMotors.getPosition() + " err: " + rightError);
+        	Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getPosition() + " err: " + leftError + "deg, right pos: " + rightMotors.getPosition() + " err: " + rightError);
 
         	leftDone = leftDist == 0  || RobotMath.abs(leftError) < MOVEMENT_ERROR_THRESHOLD;
         	rightDone = rightDist == 0  || RobotMath.abs(rightError) < MOVEMENT_ERROR_THRESHOLD;
@@ -459,6 +466,15 @@ public class SRXTankDrive implements ITankDrive
         {
         	Log.info("CmdMoveDistance", "Ending");
 
+//    		if(leftDist == 0)
+//    		{
+//    			leftMotors.changeControlMode(TalonControlMode.MotionMagic);
+//    		}
+//    		if(rightDist == 0)
+//    		{
+//    			leftMotors.changeControlMode(TalonControlMode.MotionMagic);
+//    		}
+    		
         	stopMovement();
         }
 
@@ -491,7 +507,7 @@ public class SRXTankDrive implements ITankDrive
     	 */
         public CmdArcTurn(float degs, int msec, Direction dir)
         {
-        	super(MoveEndMode.BOTH, 0, 0, .5, msec);
+        	super(MoveEndMode.BOTH, 0, 0, .5, false, msec);
         	
         	//this formula is explained on the info repository wiki
         	double wheelAngularDist = cmToEncDegrees((2 * Math.PI * track) * (degs / 360));
@@ -531,7 +547,7 @@ public class SRXTankDrive implements ITankDrive
         public CmdInPlaceTurn(float degs, double motorPower, int msec, Direction dir)
         {
         	//the encoder counts are an in-depth calculation, so we don't set them until after the super constructor
-        	super(MoveEndMode.BOTH, 0, 0, motorPower, msec);
+        	super(MoveEndMode.BOTH, 0, 0, motorPower, false, msec);
         	
         	//this formula is explained in the info repository wiki
     		double wheelAngularDist = cmToEncDegrees(turningCircleCircumference*(degs/360.0)); 
@@ -563,7 +579,7 @@ public class SRXTankDrive implements ITankDrive
     	 */
         public CmdMoveForward(double d, int msec, boolean fullSpeed)
         {
-        	super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), fullSpeed ? 1 : .50, msec);
+        	super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), fullSpeed ? 1 : .50, true, msec);
         }
         
     	/**
@@ -572,7 +588,7 @@ public class SRXTankDrive implements ITankDrive
     	 */
         public CmdMoveForward(double d, int msec, double power)
         {
-        	super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), power, msec);
+        	super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), power, true, msec);
 
         }
         
