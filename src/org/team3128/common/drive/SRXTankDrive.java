@@ -5,8 +5,10 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
+import org.team3128.common.util.units.Length;
 
 import com.ctre.CANTalon;
+import com.ctre.CANTalon.TalonControlMode;
 
 import edu.wpi.first.wpilibj.command.Command;
 
@@ -17,7 +19,13 @@ import edu.wpi.first.wpilibj.command.Command;
  * Make sure that the SRXs have quadrature encoders attached, have FeedbackDevice set, 
  * and that are configured to the correct number of counts per revolution.
  * 
- * 
+ * CALIBRATION PROCEDURE:
+ * -------------------------------------------------------------------------------------------------
+ * Get the PID constants to ballpark.
+ * EACH DAY OF EACH COMPETITION:
+ * - Run the drive forward on the practice field for 100 inches at the speed that is used for the competition autos
+ *    - Adjust feedforward on each side until the robot drives straight
+ *    - Adjust the wheel diameter until the distance is correct to the inch
  * @author Jamie
  *
  */
@@ -387,22 +395,22 @@ public class SRXTankDrive implements ITankDrive
     		}
     		
     		// motion magic does not work well when the distance is 0
-//    		if(leftDist == 0)
-//    		{
-//    			leftMotors.changeControlMode(TalonControlMode.Position);
-//    		}
-//    		if(rightDist == 0)
-//    		{
-//    			leftMotors.changeControlMode(TalonControlMode.Position);
-//    		}
+    		if(leftDist == 0)
+    		{
+    			leftMotors.changeControlMode(TalonControlMode.Position);
+    		}
+    		if(rightDist == 0)
+    		{
+    			rightMotors.changeControlMode(TalonControlMode.Position);
+    		}
 
 			leftMotors.setMotionMagicCruiseVelocity(leftSpeed);
-    		leftMotors.setMotionMagicAcceleration(leftSpeed);
+    		leftMotors.setMotionMagicAcceleration(leftSpeed / 1.5);
     		
     		leftMotors.set(leftDist / Angle.ROTATIONS);
 
     		rightMotors.setMotionMagicCruiseVelocity(rightSpeed);
-    		rightMotors.setMotionMagicAcceleration(rightSpeed);
+    		rightMotors.setMotionMagicAcceleration(rightSpeed / 1.5);
     		
     		rightMotors.set(rightDist / Angle.ROTATIONS);
 		
@@ -466,14 +474,14 @@ public class SRXTankDrive implements ITankDrive
         {
         	Log.info("CmdMoveDistance", "Ending");
 
-//    		if(leftDist == 0)
-//    		{
-//    			leftMotors.changeControlMode(TalonControlMode.MotionMagic);
-//    		}
-//    		if(rightDist == 0)
-//    		{
-//    			leftMotors.changeControlMode(TalonControlMode.MotionMagic);
-//    		}
+    		if(leftDist == 0)
+    		{
+    			leftMotors.changeControlMode(TalonControlMode.MotionMagic);
+    		}
+    		if(rightDist == 0)
+    		{
+    			rightMotors.changeControlMode(TalonControlMode.MotionMagic);
+    		}
     		
         	stopMovement();
         }
@@ -507,10 +515,22 @@ public class SRXTankDrive implements ITankDrive
     	 */
         public CmdArcTurn(float degs, int msec, Direction dir)
         {
-        	super(MoveEndMode.BOTH, 0, 0, .5, false, msec);
+        	this(degs, msec, dir, .5);
+        }
+        
+        //it seems like the math is consistently off by about 6%
+        final static double FUDGE_FACTOR = 1.06;
+        
+    	/**
+    	 * @param degs how far to turn in degrees.  Accepts negative values.
+    	 * @param msec How long the move should take. If set to 0, do not time the move.
+    	 */
+        public CmdArcTurn(float degs, int msec, Direction dir, double power)
+        {
+        	super(MoveEndMode.BOTH, 0, 0, power, false, msec);
         	
         	//this formula is explained on the info repository wiki
-        	double wheelAngularDist = cmToEncDegrees((2 * Math.PI * track) * (degs / 360));
+        	double wheelAngularDist = cmToEncDegrees((2 * Math.PI * track) * (degs / 360)) * FUDGE_FACTOR;
         	
         	if(dir == Direction.RIGHT)
         	{
@@ -599,5 +619,14 @@ public class SRXTankDrive implements ITankDrive
         }
     }
 
-   
+    public class CmdFeedForwardFineTune extends CmdMoveDistance
+    {
+
+		public CmdFeedForwardFineTune(double power, boolean useScalars, double timeout)
+		{
+			super(MoveEndMode.BOTH, 100 * Length.in, 100 * Length.in, power, false, timeout);
+			// TODO Auto-generated constructor stub
+		}
+    	
+    }
 }

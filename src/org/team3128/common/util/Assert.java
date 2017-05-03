@@ -247,6 +247,15 @@ public class Assert
 		
 		DriverStation.reportError(message, false);
 		
+		try
+		{
+			Thread.sleep(200);
+		}
+		catch(InterruptedException e)
+		{
+			e.printStackTrace();
+		}
+		
 		// No more Watchdog.killRobot(), so we have to improvise
 		System.exit(3128);
 
