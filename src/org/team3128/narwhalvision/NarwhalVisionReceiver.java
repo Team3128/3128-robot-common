@@ -160,7 +160,7 @@ public class NarwhalVisionReceiver
 	public synchronized TargetInformation[] getMostRecentTargets()
 	{
 		//make a shallow copy so that when the list is next cleared, it doesn't affect the return value of this method.
-		return (TargetInformation[]) mostRecentTargets.toArray();
+		return mostRecentTargets.toArray(new TargetInformation[mostRecentTargets.size()]);
 	}
 	
 	private synchronized void onTargetInfoReceived(TargetInformation target)

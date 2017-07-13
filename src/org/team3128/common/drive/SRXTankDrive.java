@@ -1,5 +1,6 @@
 package org.team3128.common.drive;
 
+import org.team3128.common.hardware.misc.TwoSpeedGearshift;
 import org.team3128.common.util.Assert;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
@@ -31,9 +32,19 @@ import edu.wpi.first.wpilibj.command.Command;
  */
 public class SRXTankDrive implements ITankDrive
 {
-	private CANTalon leftMotors;
-    	
-    private CANTalon rightMotors;
+	private CANTalon leftMotors, rightMotors;
+    
+    private TwoSpeedGearshift gearshift;
+    
+    /**
+     * The minimum speed (in RPM) of the wheels at which the robot should shift up to high gear if the robot was previously in low gear
+     */
+    private double shiftUpSpeed;
+    
+    /**
+     * The maximum speed (in RPM) of the wheels at which the robot should shift down to low gear if the robot was previously in high gear
+     */
+    private double shiftDownSpeed;
     
     /**
      * True if the talons are set in PercentVbus mode for teleop driving, false if they are in position PID mode for auto.
@@ -80,7 +91,8 @@ public class SRXTankDrive implements ITankDrive
      * Speed scalar for the left and right wheels.  Affects autonomous and teleop.
      */
     private double leftSpeedScalar, rightSpeedScalar;
-        
+    
+    
     public double getGearRatio()
 	{
 		return gearRatio;
@@ -130,6 +142,7 @@ public class SRXTankDrive implements ITankDrive
     	
     	setReversed(false);
     }
+    
 
     private void configureForTeleop()
     {
@@ -292,6 +305,67 @@ public class SRXTankDrive implements ITankDrive
 		tankDrive(0, 0);
 	}
 	
+	public void addShifter(TwoSpeedGearshift gearshift, double shiftUpSpeed, double shiftDownSpeed) {
+		this.gearshift = gearshift;
+		this.shiftUpSpeed = shiftUpSpeed;
+		this.shiftDownSpeed = shiftDownSpeed;
+	}
+	
+	public void shiftToHigh() {
+		if (gearshift != null) {
+			gearshift.shiftToHigh();
+		}
+		else {
+			Log.info("SRXTankDrive", "You can't shift gears. The robot doesn't actually have a gearshift.");
+		}
+	}
+	
+	public void shiftToLow() {
+		if (gearshift != null) {
+			gearshift.shiftToLow();
+		}
+		else {
+			Log.info("SRXTankDrive", "You can't shift gears. The robot doesn't actually have a gearshift.");
+		}
+	}
+	
+	public void shift() {
+		if (gearshift != null) {
+			gearshift.shiftToOtherGear();
+		}
+		else {
+			Log.info("SRXTankDrive", "You can't shift gears. The robot doesn't actually have a gearshift.");
+		}
+	}
+	
+	public boolean isInHighGear() {
+		if (gearshift != null) {
+			return gearshift.isInHighGear();
+		}
+		else {
+			Log.fatal("SRXTankDrive", "There is only one gear. The robot doesn't actually have a gearshift. The code that involves this is probably bad news.");
+			return false;
+		}
+	}
+	
+	public void autoshift() {
+		if (gearshift != null) {
+			if ( (rightMotors.getSpeed() < 0 && leftMotors.getSpeed() > 0) || (rightMotors.getSpeed() > 0 && leftMotors.getSpeed() < 0) ) {
+				gearshift.shiftToHigh();
+			}
+			else if (!gearshift.isInHighGear() && (rightMotors.getSpeed() > shiftUpSpeed || leftMotors.getSpeed() > shiftUpSpeed)) {
+				gearshift.shiftToHigh();
+			}
+			else if (gearshift.isInHighGear() && (rightMotors.getSpeed() < shiftDownSpeed && leftMotors.getSpeed() < shiftDownSpeed)) {
+				gearshift.shiftToLow();
+			}
+		}
+		else {
+			Log.info("SRXTankDrive", "You can't shift gears. The robot doesn't actually have a gearshift.");
+		}
+	}
+	
+	
 	/**
 	 * Get the estimated angle that the robot has turned since the encoders were last reset, based on the relative distances of each side.
 	 * 
@@ -387,7 +461,7 @@ public class SRXTankDrive implements ITankDrive
     		clearEncoders();
     		
     		double leftSpeed = robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0);
-    		double rightSpeed = robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0);
+    		double rightSpeed = robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0);
     		
     		if (useScalars)
     		{
