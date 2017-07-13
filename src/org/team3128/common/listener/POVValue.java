@@ -7,13 +7,13 @@ package org.team3128.common.listener;
  * These are numbered according to the diagram below.
  * 
  * <pre>
- *      1
- *   8     2
+ *      8
+ *   7     1
  *  
- * 7    0    3
+ * 6    0    2
  *    
- *   6     4
- *      5
+ *   5     3
+ *      4
  *      </pre>
  * 
  * @author Narwhal

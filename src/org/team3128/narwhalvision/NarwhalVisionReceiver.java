@@ -63,10 +63,10 @@ public class NarwhalVisionReceiver
 		DatagramPacket visionPacket = new DatagramPacket(recvBuffer, SERIALIZATION_BUFFER_SIZE);
 		
 		while(true)
-		{
-			
+		{	
 			try
 			{
+				Log.info(TAG, "Trying to recieve packet.");
 				visionDataSocket.receive(visionPacket);
 			}
 			catch(IOException e)
@@ -76,10 +76,12 @@ public class NarwhalVisionReceiver
 				continue;
 			}
 			
+			Log.info(TAG, "Setting buffer...");
 			packetReader.setBuffer(recvBuffer);
 			
 			try
 			{
+				Log.info(TAG, "Trying to decode a packet.");
 				TargetInformation targetInfo = kryo.readObject(packetReader, TargetInformation.class);
 				onTargetInfoReceived(targetInfo);
 				setLastPacketReceivedTime(System.currentTimeMillis());

@@ -360,7 +360,7 @@ public class ListenerManager
 			for (int counter = 0; counter <= numPOVs; counter++)
 			{
 				POVValue value = POVValue.fromWPILibAngle(currentJoystick.getPOV(counter));
-				if(newControls.povValues.size() <= counter)
+				if(newControls.povValues.size() - 1 <= counter)
 				{
 					POVValue oldValue = newControls.povValues.get(new POV(counter));
 					if(oldValue == null || oldValue.getDirectionValue() == 0)

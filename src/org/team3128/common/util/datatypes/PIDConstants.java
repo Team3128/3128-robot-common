@@ -66,6 +66,11 @@ public class PIDConstants
 		kIKey= "kI for " + name;
 		kDKey= "kD for " + name;
 
+		if(SmartDashboard.containsKey(kPKey))
+		{
+			return;
+		}
+		
 		SmartDashboard.putNumber(kPKey, kP);
 		SmartDashboard.putNumber(kIKey, kI);
 		SmartDashboard.putNumber(kDKey, kD);

@@ -73,7 +73,7 @@ public class PIDCalculator
 	 */
 	private double calculateIntegral()
 	{
-		if(pastValues.getSize() == 0)
+		if(pastValues.getSize() <= 1)
 		{
 			return 0;
 		}
@@ -83,7 +83,7 @@ public class PIDCalculator
 		double integral = 0;
 		for(int index = 1; index <= pastValues.getLastIndex(); ++index)
 		{
-			integral += (pastValues.get(index - 1).right + pastValues.get(index).right) * pastValues.get(index).left;
+			integral += ((pastValues.get(index - 1).right + pastValues.get(index).right)) * pastValues.get(index-1).left;
 		}
 		integral /= 2;
 		
@@ -98,9 +98,7 @@ public class PIDCalculator
 		double error = target - value;
 		
 		double derivative = -1 * (error - previousError) / deltaTime;
-		
-		Log.info("PIDCalculator", "" + pastValues.getLastIndex());
-		
+				
 		// add the time segment ending now to the integral
 		pastValues.enqueue(new Pair<Integer, Double>(deltaTime, error));
 		

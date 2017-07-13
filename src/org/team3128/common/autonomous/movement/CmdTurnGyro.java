@@ -41,8 +41,6 @@ public class CmdTurnGyro extends Command {
 	
 	private PIDCalculator pidCalc;
 	
-	//index of the next element to be replaced
-	int backOfAverageArray = 0;
 	
     public CmdTurnGyro(Gyro gyro, ITankDrive drivetrain, double degrees, double threshold, PIDConstants pidConstants, int msec)
     {
@@ -55,6 +53,7 @@ public class CmdTurnGyro extends Command {
     	this.drivetrain = drivetrain;
     	
     	pidCalc.setTarget(degrees);
+    	pidCalc.enableLogging("Gyro Turn");
     }
 
     protected void initialize()
@@ -67,7 +66,7 @@ public class CmdTurnGyro extends Command {
     {
 		
 		double output = pidCalc.update(gyro.getAngle());
-        
+        		
         output = RobotMath.clamp(output, -OUTPUT_POWER_LIMIT, OUTPUT_POWER_LIMIT);
    		drivetrain.tankDrive(-output, output);
 		
@@ -76,7 +75,7 @@ public class CmdTurnGyro extends Command {
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished()
     {
-    	return pidCalc.getNumUpdatesInsideThreshold() >= 2;
+    	return isTimedOut() || pidCalc.getNumUpdatesInsideThreshold() >= 10;
     }
 
     // Called once after isFinished returns true

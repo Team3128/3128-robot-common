@@ -323,6 +323,7 @@ public abstract class NarwhalRobot extends RobotBase
 	private void setupAutoChooser()
 	{
         Log.info("NarwhalRobot", "Setting Up Autonomous Chooser...");
+        Scheduler.getInstance().removeAll(); // get rid of any paused commands
 		autoChooser = new GenericSendableChooser<>();
         constructAutoPrograms(autoChooser);
         

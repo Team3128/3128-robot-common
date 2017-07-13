@@ -37,7 +37,7 @@ public class RandomAccessBuffer<T>
      */
     public int getLastIndex()
     {
-    	return elements.length - 1;
+    	return size == 0 ? 0 : size-1;
     }
 
     /**
