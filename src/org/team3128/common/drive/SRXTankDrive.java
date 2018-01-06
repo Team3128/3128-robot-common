@@ -2,6 +2,7 @@ package org.team3128.common.drive;
 
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
 import org.team3128.common.util.Assert;
+import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.enums.Direction;
@@ -138,12 +139,12 @@ public class SRXTankDrive implements ITankDrive
 		}
 
 		// act like battery voltage is always 11V if it is higher
-		this.leftMotors.configNominalOutputForward(11.0/12.0, 500);
-		this.leftMotors.configNominalOutputReverse(11.0/12.0, 500);
+		this.leftMotors.configNominalOutputForward(1.5/12.0, Constants.CAN_TIMEOUT);
+		this.leftMotors.configNominalOutputReverse(1.5/12.0, Constants.CAN_TIMEOUT);
 		
-		this.rightMotors.configNominalOutputForward(11.0/12.0, 500);
-		this.rightMotors.configNominalOutputReverse(11.0/12.0, 500);
-
+		this.rightMotors.configNominalOutputForward(1.5/12.0, Constants.CAN_TIMEOUT);
+		this.rightMotors.configNominalOutputReverse(1.5/12.0, Constants.CAN_TIMEOUT);
+		 
 		setReversed(false);
 	}
 
@@ -296,8 +297,8 @@ public class SRXTankDrive implements ITankDrive
 
 	public void clearEncoders()
 	{
-		leftMotors.setSelectedSensorPosition(0, 0, 500);
-		rightMotors.setSelectedSensorPosition(0, 0, 500);
+		leftMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
+		rightMotors.setSelectedSensorPosition(0, 0, Constants.CAN_TIMEOUT);
 	}
 
 	@Override
@@ -490,18 +491,18 @@ public class SRXTankDrive implements ITankDrive
 				rightMode = ControlMode.Position;
 			}
 
-			leftMotors.configMotionCruiseVelocity((int) leftSpeed, 500);
-			leftMotors.configMotionAcceleration((int) (leftSpeed / 1.5), 500);
+			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
+			leftMotors.configMotionAcceleration((int) (leftSpeed / 1.5), Constants.CAN_TIMEOUT);
 
-			leftMotors.set(leftMode, leftDist / Angle.ROTATIONS);
+			leftMotors.set(leftMode, leftDist / Angle.CTRE_MAGENC_NU);
 
-			rightMotors.configMotionCruiseVelocity((int) rightSpeed, 500);
-			rightMotors.configMotionAcceleration((int) (rightSpeed / 1.5), 500);
+			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
+			rightMotors.configMotionAcceleration((int) (rightSpeed / 1.5), Constants.CAN_TIMEOUT);
 
-			rightMotors.set(rightMode, rightDist / Angle.ROTATIONS);
+			rightMotors.set(rightMode, rightDist / Angle.CTRE_MAGENC_NU);
 
 
-			Log.debug("CmdMoveDistance", "Distances: L:" + leftDist/Angle.ROTATIONS + " rot, R: " + rightDist/Angle.ROTATIONS + " rot, Speeds: L: " + leftSpeed + " RPM, R: " + rightSpeed + " RPM");
+			Log.debug("CmdMoveDistance", "Distances: L:" + leftDist/Angle.CTRE_MAGENC_NU + " rot, R: " + rightDist/Angle.CTRE_MAGENC_NU + " rot, Speeds: L: " + leftSpeed + " RPM, R: " + rightSpeed + " RPM");
 
 			try
 			{
@@ -516,8 +517,8 @@ public class SRXTankDrive implements ITankDrive
 		// Make this return true when this Command no longer needs to run execute()
 		protected boolean isFinished()
 		{
-			double leftError = leftMotors.getSelectedSensorPosition(0) * Angle.ROTATIONS - leftDist;
-			double rightError = rightMotors.getSelectedSensorPosition(0) * Angle.ROTATIONS - rightDist;
+			double leftError = leftMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - leftDist;
+			double rightError = rightMotors.getSelectedSensorPosition(0) * Angle.CTRE_MAGENC_NU - rightDist;
 
 			Log.debug("CmdMoveDistance", "left pos: " + leftMotors.getSelectedSensorPosition(0) + " err: " + leftError + "deg, right pos: " + rightMotors.getSelectedSensorPosition(0) + " err: " + rightError);
 
