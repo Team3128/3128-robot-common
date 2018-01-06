@@ -243,32 +243,51 @@
 
 	</target>
 
-	<target name="dependencies" depends="get-target-ip">
-		<property name="ant.enable.asserts" value="true"/>
-		<post to="http://${target}/nisysapi/server" logfile="sysProps.xml" verbose="false" encoding="UTF-16LE" append="false">
-			<prop name="Function" value="GetPropertiesOfItem"/>
-			<prop name="Plugins" value="nisyscfg"/>
-			<prop name="Items" value="system"/>
-		</post>
-		<loadfile srcFile="sysProps.xml" encoding="UTF-16LE" property="roboRIOSysValues"/>
-		<propertyregex property="roboRIOImage" input="${roboRIOSysValues}" regexp="FRC_roboRIO_[0-9]+_v([0-9]+)" select="\1" defaultValue="ImageRegExFail"/>
-		<propertyregex property="roboRIOImageYear" input="${roboRIOSysValues}" regexp="FRC_roboRIO_([0-9]+)_v" select="\1" defaultValue="ImageRegExFail"/>
-		<assert message="Image of roboRIO does not match plugin. ${line.separator}Allowed image year: ${roboRIOAllowedYear} version: ${roboRIOAllowedImages}. ${line.separator}Actual image year: ${roboRIOImageYear} version ${roboRIOImage}. ${line.separator}RoboRIO needs to be re-imaged or plugins updated.">
+	<target name="dependencies"
+					depends="get-target-ip">
+		<property name="ant.enable.asserts"
+							value="true" />
+		<assert message="Image of roboRIO does not match plugin. ${line.separator}Allowed image year: ${roboRIOAllowedYear} version: ${roboRIOAllowedImages}. ${line.separator}Actual image year:  ${roboRIOImageYear} version: ${roboRIOImage}. ${line.separator}RoboRIO needs to be re-imaged or plugins updated.">
+
 			<bool>
 				<and>
-					<contains string="${roboRIOAllowedImages}" substring="${roboRIOImage}"/>
-					<contains string="${roboRIOAllowedYear}" substring="${roboRIOImageYear}"/>
+					<contains string="${roboRIOAllowedImages}"
+										substring="${roboRIOImage}" />
+					<contains string="${roboRIOAllowedYear}"
+										substring="${roboRIOImageYear}" />
 				</and>
 			</bool>
 		</assert>
-		<echo>roboRIO image version validated</echo>
-		<echo>Checking for JRE. If this fails install the JRE using these instructions: https://wpilib.screenstepslive.com/s/4485/m/13503/l/288822-installing-java-8-on-the-roborio-using-the-frc-roborio-java-installer-java-only</echo>
-		<sshexec host="${target}"
-		    username="${username}"
-		    password="${password}"
-		    trust="true"
-			failonerror="true"
-		    command="test -d ${roboRIOJRE.dir}"/>
+		<echo message="roboRIO image version validated" />
+		<webdav username="${adminUsername}"
+						password="${adminPassword}">
+			<exists url="http://${target}/files${roboRIOJRE.dir}/bin/java"
+							property="jreExists" />
+		</webdav>
+		<if>
+			<not>
+				<equals arg1="${jreExists}" arg2="true" />
+			</not>
+			<then>
+				<echo message="Installing Azul Zulu JRE, this may take a couple of minutes..." />
+				<webdav username="${adminUsername}"
+								password="${adminPassword}">
+					<delete url="http://${target}/files/tmp/${roboRIOJRE.ipk}" />
+					<put url="http://${target}/files/tmp/">
+						<fileset file="${wpilib.ant.dir}/${roboRIOJRE.ipk}" />
+					</put>
+				</webdav>
+				<!-- the sed command is a workaround for an issue in the 2018_v4 image -->
+				<sshexec host="${target}"
+								 username="${adminUsername}"
+								 password="${adminPassword}"
+								 trust="true"
+								 command="sed -i -e 's/^StartupDLLs/;StartupDLLs/' /etc/natinst/share/ni-rt.ini; opkg remove zulu-jre\*; opkg install /tmp/${roboRIOJRE.ipk}; rm /tmp/${roboRIOJRE.ipk}" />
+			</then>
+			<else>
+				<echo message="JRE installation validated" />
+			</else>
+		</if>
 	</target>
 	
 	<!-- libs.name should not contain spaces as it is used to name a file -->
