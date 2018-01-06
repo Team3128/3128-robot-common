@@ -3,9 +3,9 @@ package org.team3128.testmainclasses;
 import org.team3128.common.NarwhalRobot;
 import org.team3128.common.util.Log;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.FeedbackDevice;
-import com.ctre.CANTalon.TalonControlMode;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -13,10 +13,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class MainSRXVelocityPIDCalib extends NarwhalRobot 
 {
 	
-	
 	//change these to match your robot
 	static int CAN_ID = 0;
-	static int ENCODER_CPR_NATIVE_UNITS = 1024 * 4;
 	static double TESTING_MOTOR_POWER = 1;
 	
 	private enum State
@@ -28,7 +26,7 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 	
 	final static String TAG = "SRX Velocity Calibrator";
 	
-	CANTalon testSRX;
+	TalonSRX testSRX;
 	
 	private State state = State.TEST_DIR;
 	
@@ -40,12 +38,16 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 	@Override
 	protected void constructHardware() 
 	{
-		testSRX = new CANTalon(CAN_ID);
-		testSRX.changeControlMode(TalonControlMode.PercentVbus);
-		testSRX.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
-		testSRX.setPID(0, 0, 0, 0, 0, 0, 0);
-		testSRX.setVoltageRampRate(12); // V per sec
-		testSRX.reverseSensor(true);
+		testSRX = new TalonSRX(CAN_ID);
+		testSRX.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 500);
+		testSRX.config_kP(0, 0, 500);
+		testSRX.config_kI(0, 0, 500);
+		testSRX.config_kD(0, 0, 500);
+		testSRX.config_kF(0, 0, 500);
+		testSRX.config_IntegralZone(0, 0, 500);
+		testSRX.configClosedloopRamp(1, 500);
+		
+		testSRX.setSensorPhase(true);
 		
 		joy = new Joystick(0);
 		
@@ -61,7 +63,7 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 
 	@Override
 	protected void teleopInit() {
-		testSRX.set(TESTING_MOTOR_POWER);
+		testSRX.set(ControlMode.PercentOutput, TESTING_MOTOR_POWER);
 
 	}
 
@@ -77,36 +79,34 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 		switch(state)
 		{
 		case TEST_DIR:
-			Log.info(TAG, "speed: " + testSRX.getSpeed());
-			if(testSRX.getSpeed() > 0)
+			Log.info(TAG, "speed: " + testSRX.getSelectedSensorVelocity(0));
+			if(testSRX.getSelectedSensorVelocity(0) > 0)
 			{
 				state = State.CALIB_FEEDFORWARD;
 				Log.info(TAG, "Encoder setup correct.  Calibrating Feedforward...");
 				
 			}
-			else if(testSRX.getSpeed() < 0)
+			else if(testSRX.getSelectedSensorVelocity(0) < 0)
 			{
 				Log.recoverable(TAG, "The encoder is backwards!  Please reverse it and try again");
-				testSRX.disable();
+				testSRX.neutralOutput();
 			}
 			break;
 		case CALIB_FEEDFORWARD:
-			double velocityNativeUnits = testSRX.getSpeed() * (ENCODER_CPR_NATIVE_UNITS/60);
-			double feedforward = (1023 * TESTING_MOTOR_POWER) / velocityNativeUnits; 
+			double velocityNativeUnitsPer100ms = testSRX.getSelectedSensorVelocity(0);
+			double feedforward = (1023 * TESTING_MOTOR_POWER) / velocityNativeUnitsPer100ms; 
 			Log.info(TAG, "Feedforward: " + feedforward + " (Press Trigger to use this value and continue)");
 			
 			if(joy.getTrigger())
 			{
-				motorMaxRPM = testSRX.getSpeed();
+				motorMaxRPM = testSRX.getSelectedSensorVelocity(0);
 				SmartDashboard.putNumber("P", 0);
 				SmartDashboard.putNumber("I", 0);
 				SmartDashboard.putNumber("D", 0);
 				
-				testSRX.setF(feedforward);
+				testSRX.config_kF(0, feedforward, 500);
 				state = State.CALIB_PID;
-				
-				testSRX.changeControlMode(TalonControlMode.Speed);
-				
+								
 				Log.info(TAG, "Please calibrate PID constants. The joystick controls speed.");
 				Log.info(TAG, "When these PID values work, you're done!");
 
@@ -116,21 +116,20 @@ public class MainSRXVelocityPIDCalib extends NarwhalRobot
 			double targetRPM = motorMaxRPM * joy.getY();
 			
 			SmartDashboard.putNumber("Target RPM: ", targetRPM);
-			SmartDashboard.putNumber("Error (RPM)", testSRX.getClosedLoopError());
+			SmartDashboard.putNumber("Error (RPM)", testSRX.getClosedLoopError(0));
 			
-			testSRX.set(targetRPM);
+			testSRX.set(ControlMode.Velocity, targetRPM);
 			
-			testSRX.setP(SmartDashboard.getNumber("P"));
-			testSRX.setI(SmartDashboard.getNumber("I"));
-			testSRX.setD(SmartDashboard.getNumber("D"));
-		
+			testSRX.config_kP(0, SmartDashboard.getNumber("P", 0), 500);
+			testSRX.config_kI(0, SmartDashboard.getNumber("I", 0), 500);
+			testSRX.config_kD(0, SmartDashboard.getNumber("D", 0), 500);
 		}
 	}
 	
 	@Override
 	protected void updateDashboard()
 	{
-		SmartDashboard.putNumber("Speed (RPM)", testSRX.getSpeed());
+		SmartDashboard.putNumber("Speed (RPM)", testSRX.getSelectedSensorVelocity(0));
 	}
 
 }

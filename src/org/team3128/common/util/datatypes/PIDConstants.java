@@ -84,9 +84,9 @@ public class PIDConstants
 	{
 		if(usingSmartDashboard)
 		{
-			kP = SmartDashboard.getNumber(kPKey);
-			kI = SmartDashboard.getNumber(kIKey);
-			kD = SmartDashboard.getNumber(kDKey);
+			kP = SmartDashboard.getNumber(kPKey, 0);
+			kI = SmartDashboard.getNumber(kIKey, 0);
+			kD = SmartDashboard.getNumber(kDKey, 0);
 
 		}
 	}

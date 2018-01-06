@@ -1,21 +1,24 @@
 package org.team3128.common.hardware.encoder.distance;
 
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Sendable;
-import edu.wpi.first.wpilibj.tables.ITable;
+import edu.wpi.first.wpilibj.SendableBase;
+import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
 
 /**
  * Represents a variable resistor/potentiometer encoder. 
  * @author Kian, Jamie
  *
  */
-public class AnalogPotentiometerEncoder implements IDistanceEncoder, Sendable
+public class AnalogPotentiometerEncoder extends SendableBase implements IDistanceEncoder, Sendable
 {
 	private AnalogInput enc;
 	private double degreesPerVolt;
     private double offset;
     
-    private ITable table;
+    private NetworkTable table;
     
     /**
      * 
@@ -50,38 +53,21 @@ public class AnalogPotentiometerEncoder implements IDistanceEncoder, Sendable
 		return false;
 	}
 
-	@Override
-	public void initTable(ITable subtable)
-	{
-		table = subtable;
-		updateTable();
-	}
-	
-	/**
-	 * Call this to update the angle stored in the ITable
-	 */
-	private void updateTable()
-	{
-		table.putNumber("Angle", getAngle());
-	}
-
-	@Override
-	public ITable getTable()
-	{
-		return table;
-	}
-
-	@Override
-	public String getSmartDashboardType()
-	{
-		return "Potentiometer";
-	}
 
 	@Override
 	public void reset()
 	{
 		offset = getAngle();
 		
+	}
+
+	@Override
+	public void initSendable(SendableBuilder builder) {
+		builder.setSmartDashboardType("Potentiometer");
+		
+		builder.addDoubleProperty("Angle", () -> {
+			return getAngle();
+		}, null);
 	}
 
 }

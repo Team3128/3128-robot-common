@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import org.team3128.common.listener.ListenerManager;
 import org.team3128.common.util.Assert;
-import org.team3128.common.util.GenericSendableChooser;
+//import org.team3128.common.util.GenericSendableChooser;
 import org.team3128.common.util.Log;
 
 import edu.wpi.first.wpilibj.RobotBase;
@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.hal.FRCNetComm.tInstances;
 import edu.wpi.first.wpilibj.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.wpilibj.hal.HAL;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /*
@@ -51,7 +52,7 @@ public abstract class NarwhalRobot extends RobotBase
 	 * 
 	 * This function will called multiple times.
 	 */
-	protected void constructAutoPrograms(GenericSendableChooser<CommandGroup> programChooser) {}
+	protected void constructAutoPrograms(SendableChooser<CommandGroup> programChooser) {}
 	
 	/**
 	 * Called every time teleop is started from the driver station
@@ -106,7 +107,7 @@ public abstract class NarwhalRobot extends RobotBase
 	//---------------------------------------------------------------------------------
 
 	ArrayList<ListenerManager> listenerManagers = new ArrayList<ListenerManager>();
-	GenericSendableChooser<CommandGroup> autoChooser;
+	SendableChooser<CommandGroup> autoChooser;
 	
 	final static int dashboardUpdateWavelength = 100; //NetworkTables transmits every 100ms... I think
 	
@@ -324,25 +325,19 @@ public abstract class NarwhalRobot extends RobotBase
 	{
         Log.info("NarwhalRobot", "Setting Up Autonomous Chooser...");
         Scheduler.getInstance().removeAll(); // get rid of any paused commands
-		autoChooser = new GenericSendableChooser<>();
+		autoChooser = new SendableChooser<>();
         constructAutoPrograms(autoChooser);
         
-        if(autoChooser.getLength() > 1)
-        {
-            SmartDashboard.putData("autoChooser", autoChooser);
-        }
+       
+        SmartDashboard.putData("autoChooser", autoChooser);
+       
 	}
 	
 	private void runAutoProgram()
 	{
-		
-		//we need to be error tolerant here, this has bit me in the past
 		CommandGroup autoProgram = null;
-		
-		if(autoChooser.getLength() > 0)
-		{
-			autoProgram = autoChooser.getSelected();
-		}
+
+		autoProgram = autoChooser.getSelected();
 		
 		if(autoProgram == null)
 		{
