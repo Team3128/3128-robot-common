@@ -1,6 +1,7 @@
 package org.team3128.common.drive;
 
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
+import org.team3128.common.hardware.motor.NarwhalSRX;
 import org.team3128.common.util.Assert;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
@@ -35,7 +36,7 @@ import edu.wpi.first.wpilibj.command.Command;
  */
 public class SRXTankDrive implements ITankDrive
 {
-	private TalonSRX leftMotors, rightMotors;
+	private NarwhalSRX leftMotors, rightMotors;
 
 	private TwoSpeedGearshift gearshift;
 
@@ -109,15 +110,15 @@ public class SRXTankDrive implements ITankDrive
 	/**
 	 * If there is more than one motor per side, configure each additional Talon to follow the one with the encoder using Follower mode.
 	 * 
-	 * @param leftMotors The "lead" Talon SRX on the left side.
-	 * @param rightMotors The "lead" Talon SRX on the right side.
+	 * @param leftMotors The "lead" NarwhalSRX on the left side.
+	 * @param rightMotors The "lead" NarwhalSRX on the right side.
 	 * @param wheelCircumfrence The circumference of the wheel
 	 * @param gearRatio The gear ratio of the turns of the wheels per turn of the encoder shaft
 	 * @param wheelBase The distance between the front and back wheel on a side
 	 * @param track distance across between left and right wheels
 	 * @param robotFreeSpeed the measured maximum speed (in RPM) of the robot when it is driving
 	 */
-	public SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, double robotFreeSpeed)
+	public SRXTankDrive(NarwhalSRX leftMotors, NarwhalSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, double robotFreeSpeed)
 	{
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
@@ -160,6 +161,9 @@ public class SRXTankDrive implements ITankDrive
 
 			leftMotors.setNeutralMode(NeutralMode.Brake);
 			rightMotors.setNeutralMode(NeutralMode.Brake);
+			
+			leftMotors.configureTeleop();
+			rightMotors.configureTeleop();
 
 			configuredForTeleop = true;
 		}
@@ -174,6 +178,9 @@ public class SRXTankDrive implements ITankDrive
 
 		leftMotors.setNeutralMode(NeutralMode.Brake);
 		rightMotors.setNeutralMode(NeutralMode.Brake);
+		
+		leftMotors.configureAutonomous();
+		rightMotors.configureAutonomous();
 
 		configuredForTeleop = false;
 	}
