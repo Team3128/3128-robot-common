@@ -7,6 +7,7 @@ import org.team3128.common.util.Log;
 import org.team3128.common.util.RobotMath;
 import org.team3128.common.util.enums.Direction;
 import org.team3128.common.util.units.Angle;
+import org.team3128.common.util.units.AngularSpeed;
 import org.team3128.common.util.units.Length;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -312,6 +313,13 @@ public class SRXTankDrive implements ITankDrive
 		tankDrive(0, 0);
 	}
 
+	/**
+	 * Adds a two-speed gearshift to the robot drive.
+	 * 
+	 * @param gearshift Two-speed gearshift object
+	 * @param shiftUpSpeed The minimum speed (in RPM) for which the gearshift should shift to high gear 
+	 * @param shiftDownSpeed The maximum speed (in RPM) for which the gearshift should shift to low gear 
+	 */
 	public void addShifter(TwoSpeedGearshift gearshift, double shiftUpSpeed, double shiftDownSpeed) {
 		this.gearshift = gearshift;
 		this.shiftUpSpeed = shiftUpSpeed;
@@ -357,8 +365,11 @@ public class SRXTankDrive implements ITankDrive
 
 	public void autoshift() {
 		if (gearshift != null) {
-			int rightSpeed = rightMotors.getSelectedSensorVelocity(0);
-			int leftSpeed = rightMotors.getSelectedSensorVelocity(0);
+			int rightSpeedNative = rightMotors.getSelectedSensorVelocity(0);
+			int leftSpeedNative = rightMotors.getSelectedSensorVelocity(0);
+			
+			double rightSpeed = rightSpeedNative / AngularSpeed.NATIVE_UNITS_PER_100MS;
+			double leftSpeed = leftSpeedNative / AngularSpeed.NATIVE_UNITS_PER_100MS;
 			
 			if ((rightSpeed < 0 && leftSpeed > 0) || (rightSpeed > 0 && leftSpeed < 0)) {
 				gearshift.shiftToHigh();
