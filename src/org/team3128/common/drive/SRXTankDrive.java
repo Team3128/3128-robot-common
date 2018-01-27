@@ -13,7 +13,6 @@ import org.team3128.common.util.units.Length;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.command.Command;
 
@@ -127,7 +126,7 @@ public class SRXTankDrive implements ITankDrive
 		this.wheelBase = wheelBase;
 		this.track = track;
 		this.gearRatio = gearRatio;
-		this.robotMaxSpeed = (int) (4096 * robotFreeSpeed / 10);
+		this.robotMaxSpeed = (int) (robotFreeSpeed * AngularSpeed.NATIVE_UNITS_PER_100MS);
 
 		double turningCircleDiameter = Math.sqrt(RobotMath.square(track) + RobotMath.square(wheelBase)); //pythagorean theorem
 		turningCircleCircumference = turningCircleDiameter * Math.PI;
@@ -491,8 +490,11 @@ public class SRXTankDrive implements ITankDrive
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
 			
-			ControlMode leftMode = ControlMode.MotionMagic;
-			ControlMode rightMode = ControlMode.MotionMagic;
+			//ControlMode leftMode = ControlMode.MotionMagic;
+			//ControlMode rightMode = ControlMode.MotionMagic;
+			
+			ControlMode leftMode = ControlMode.Position;
+			ControlMode rightMode = ControlMode.Position;
 
 			if (useScalars)
 			{

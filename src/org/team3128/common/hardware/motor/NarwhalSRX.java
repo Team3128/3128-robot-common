@@ -16,7 +16,7 @@ public class NarwhalSRX extends com.ctre.phoenix.motorcontrol.can.TalonSRX {
 		OUTPUT(true, false, "Output"),
 		BOTH(true, true, "Both");
 		
-		private boolean setInverted, setSensorPhase;
+		public boolean setInverted, setSensorPhase;
 		private String name;
 		
 		Reverse(boolean setInverted, boolean setSensorPhase, String name) {
@@ -47,13 +47,16 @@ public class NarwhalSRX extends com.ctre.phoenix.motorcontrol.can.TalonSRX {
 		currentMode = Reverse.NONE;
 		
 		setAutnomousReverseMode(autonomous);
-		setReverseMode(teleop);
+		setTeleopReverseMode(teleop);
 	}
 	
 	public NarwhalSRX(int deviceNumber) {
 		super(deviceNumber);
 		
 		currentMode = Reverse.NONE;
+		
+		setAutnomousReverseMode(Reverse.NONE);
+		setTeleopReverseMode(Reverse.NONE);
 	}
 	
 	/**
