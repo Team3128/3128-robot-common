@@ -115,9 +115,9 @@ public class SRXTankDrive implements ITankDrive
 	 * @param gearRatio The gear ratio of the turns of the wheels per turn of the encoder shaft
 	 * @param wheelBase The distance between the front and back wheel on a side
 	 * @param track distance across between left and right wheels
-	 * @param robotFreeSpeed the measured maximum speed (in RPM) of the robot when it is driving
+	 * @param robotFreeSpeed the measured maximum speed in native units per 100ms of the robot when it is driving
 	 */
-	public SRXTankDrive(NarwhalSRX leftMotors, NarwhalSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, double robotFreeSpeed)
+	public SRXTankDrive(NarwhalSRX leftMotors, NarwhalSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, int robotFreeSpeed)
 	{
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
@@ -126,7 +126,7 @@ public class SRXTankDrive implements ITankDrive
 		this.wheelBase = wheelBase;
 		this.track = track;
 		this.gearRatio = gearRatio;
-		this.robotMaxSpeed = (int) (robotFreeSpeed * AngularSpeed.NATIVE_UNITS_PER_100MS);
+		this.robotMaxSpeed = robotFreeSpeed;
 
 		double turningCircleDiameter = Math.sqrt(RobotMath.square(track) + RobotMath.square(wheelBase)); //pythagorean theorem
 		turningCircleCircumference = turningCircleDiameter * Math.PI;
@@ -490,11 +490,11 @@ public class SRXTankDrive implements ITankDrive
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
 			
-			//ControlMode leftMode = ControlMode.MotionMagic;
-			//ControlMode rightMode = ControlMode.MotionMagic;
+			ControlMode leftMode = ControlMode.MotionMagic;
+			ControlMode rightMode = ControlMode.MotionMagic;
 			
-			ControlMode leftMode = ControlMode.Position;
-			ControlMode rightMode = ControlMode.Position;
+			//ControlMode leftMode = ControlMode.Position;
+			//ControlMode rightMode = ControlMode.Position;
 
 			if (useScalars)
 			{
@@ -512,17 +512,17 @@ public class SRXTankDrive implements ITankDrive
 			}
 
 			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
-			leftMotors.configMotionAcceleration((int) (leftSpeed / 1.5), Constants.CAN_TIMEOUT);
+			leftMotors.configMotionAcceleration((int) (leftSpeed / 1.0), Constants.CAN_TIMEOUT);
 
 			leftMotors.set(leftMode, leftDist / Angle.CTRE_MAGENC_NU);
 
 			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionAcceleration((int) (rightSpeed / 1.5), Constants.CAN_TIMEOUT);
+			rightMotors.configMotionAcceleration((int) (rightSpeed / 1.0), Constants.CAN_TIMEOUT);
 
 			rightMotors.set(rightMode, rightDist / Angle.CTRE_MAGENC_NU);
 
 
-			Log.debug("CmdMoveDistance", "Distances: L:" + leftDist/Angle.CTRE_MAGENC_NU + " rot, R: " + rightDist/Angle.CTRE_MAGENC_NU + " rot, Speeds: L: " + leftSpeed + " RPM, R: " + rightSpeed + " RPM");
+			Log.debug("CmdMoveDistance", "Distances -\nL: " +  leftDist/Angle.CTRE_MAGENC_NU + " rot; R: " + rightDist/Angle.CTRE_MAGENC_NU + " rot\nSpeeds-\nL: " + leftSpeed + " RPM, R: " + rightSpeed + " RPM");
 
 			try
 			{

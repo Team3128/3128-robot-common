@@ -80,10 +80,10 @@ public class NarwhalSRX extends com.ctre.phoenix.motorcontrol.can.TalonSRX {
 	}
 	
 	public void configureAutonomous() {
-		setReverseMode(autonomousMode);
+		//setReverseMode(autonomousMode);
 	}
 	
 	public void configureTeleop() {
-		setReverseMode(teleopMode);
+		//setReverseMode(teleopMode);
 	}
 }
