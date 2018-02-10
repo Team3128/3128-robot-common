@@ -238,7 +238,7 @@ public class SRXTankDrive implements ITankDrive
 			spdR *= -1;
 		}
 
-		Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle + " spdR: " + spdR + " spdL: " + spdL);
+		//Log.debug("SRXTankDrive", "x1: " + joyX + " throttle: " + throttle + " spdR: " + spdR + " spdL: " + spdL);
 
 		leftMotors.set(ControlMode.PercentOutput, spdL);
 		rightMotors.set(ControlMode.PercentOutput, spdR);
@@ -368,7 +368,7 @@ public class SRXTankDrive implements ITankDrive
 			return false;
 		}
 	}
-
+	
 	public void autoshift() {
 		if (gearshift != null) {
 			int rightSpeedNative = rightMotors.getSelectedSensorVelocity(0);

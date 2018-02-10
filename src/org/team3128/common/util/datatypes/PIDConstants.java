@@ -9,21 +9,23 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class PIDConstants
 {
-	private double kP, kI, kD;
+	private double kP, kI, kD, kF;
 	
 	private boolean usingSmartDashboard = false;
 	
 	//SmartDashboard keys
-	String kPKey, kIKey, kDKey;
+	String kPKey, kIKey, kDKey, kFKey;
 	
 	
-	public PIDConstants(double kP, double kI, double kD)
+	public PIDConstants(double kP, double kI, double kD, double kF)
 	{
 		this.kP = kP;
 		
 		this.kI = kI;
 		
 		this.kD = kD;
+		
+		this.kF = kF;
 	}
 	
 	public PIDConstants(double kP)
@@ -33,6 +35,8 @@ public class PIDConstants
 		this.kI = 0;
 		
 		this.kD = 0;
+		
+		this.kF = 0;
 	}
 	
 	public double getkP()
@@ -52,6 +56,12 @@ public class PIDConstants
 		updateFromDashboard();
 		return kD;
 	}
+	
+	public double getkF()
+	{
+		updateFromDashboard();
+		return kF;
+	}
 
 	/**
 	 * Put these values on the SmartDashboard so they can be edited by the user.
@@ -65,6 +75,7 @@ public class PIDConstants
 		kPKey= "kP for " + name;
 		kIKey= "kI for " + name;
 		kDKey= "kD for " + name;
+		kFKey= "kF for " + name;
 
 		if(SmartDashboard.containsKey(kPKey))
 		{
@@ -74,6 +85,7 @@ public class PIDConstants
 		SmartDashboard.putNumber(kPKey, kP);
 		SmartDashboard.putNumber(kIKey, kI);
 		SmartDashboard.putNumber(kDKey, kD);
+		SmartDashboard.putNumber(kFKey, kF);
 
 	}
 	
@@ -87,7 +99,7 @@ public class PIDConstants
 			kP = SmartDashboard.getNumber(kPKey, 0);
 			kI = SmartDashboard.getNumber(kIKey, 0);
 			kD = SmartDashboard.getNumber(kDKey, 0);
-
+			kF = SmartDashboard.getNumber(kFKey, 0);
 		}
 	}
 }
