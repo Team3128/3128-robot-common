@@ -1,7 +1,8 @@
 package org.team3128.common.drive;
 
-import org.team3128.common.hardware.motor.NarwhalSRX;
 import org.team3128.common.util.RobotMath;
+
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 
@@ -15,7 +16,7 @@ import edu.wpi.first.wpilibj.ADXRS450_Gyro;
  */
 public class SRXTankDrivePosition {
 	private ADXRS450_Gyro gyro;
-	private NarwhalSRX leftDriveMotors, rightDriveMotors;
+	private TalonSRX leftDriveMotors, rightDriveMotors;
 
 	/**
 	 * The circumference of the wheels, in centimeters
@@ -38,7 +39,7 @@ public class SRXTankDrivePosition {
 	 */
 	private double zeroAngle;
 
-	public SRXTankDrivePosition(NarwhalSRX leftDriveMotors, NarwhalSRX rightDriveMotors, ADXRS450_Gyro gyro,
+	public SRXTankDrivePosition(TalonSRX leftDriveMotors, TalonSRX rightDriveMotors, ADXRS450_Gyro gyro,
 			double wheelCirc) {
 		this.leftDriveMotors = leftDriveMotors;
 		this.rightDriveMotors = rightDriveMotors;
