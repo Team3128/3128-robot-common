@@ -317,7 +317,7 @@ public class RobotMath {
 	
 	/**
 	 * Returns the cosine of angle d in degrees.
-	 * @param d
+	 * @param d The angle is degrees.
 	 */
 	public static double cos(double d) {
 		return Math.cos(d / Angle.RADIANS); // convert to radians
@@ -325,7 +325,7 @@ public class RobotMath {
 	
 	/**
 	 * Returns the sine of angle d in degrees.
-	 * @param d
+	 * @param d The angle is degrees.
 	 */
 	public static double sin(double d) {
 		return Math.sin(d / Angle.RADIANS);
@@ -333,7 +333,7 @@ public class RobotMath {
 	
 	/**
 	 * Returns the tangent of angle d in degrees.
-	 * @param d
+	 * @param d The angle is degrees.
 	 */
 	public static double tan(double d) {
 		return Math.tan(d / Angle.RADIANS);

@@ -26,6 +26,7 @@ public class NarwhalVisionReceiver
 	private ByteBufferOutput packetWriter;
 	
 	private long lastPacketRecvTime = 0;
+	private String coprocessorIPAddress = "10.31.28.xxx";
 	
 	//make sure to only access through synchronized functions, updated asynchronously
 	private ArrayList<TargetInformation> mostRecentTargets;
@@ -73,8 +74,13 @@ public class NarwhalVisionReceiver
 			{
 				Log.recoverable(TAG, "Failed to receive vision packet: " + e.getMessage());
 				e.printStackTrace();
+				
+				setCoprocessorIP("Not Connected...");
+				
 				continue;
 			}
+			
+			setCoprocessorIP(visionPacket.getAddress().toString());
 			
 			Log.info(TAG, "Setting buffer...");
 			packetReader.setBuffer(recvBuffer);
@@ -151,6 +157,18 @@ public class NarwhalVisionReceiver
 	private synchronized void setLastPacketReceivedTime(long time)
 	{
 		lastPacketRecvTime = time;
+	}
+	
+	/**
+	 * Gets the String literal of the IP Address that the packet was recieved from. If an iteration of the reviever loop has occured without recieving a packet, the IP will return as "Not Connected...".
+	 * @return
+	 */
+	public synchronized String getCoprocessorIP() {
+		return coprocessorIPAddress;
+	}
+	
+	private synchronized void setCoprocessorIP(String ipLiteral) {
+		coprocessorIPAddress = ipLiteral;
 	}
 	
 	/**
