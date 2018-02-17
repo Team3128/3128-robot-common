@@ -1,7 +1,6 @@
 package org.team3128.common.drive;
 
 import org.team3128.common.hardware.misc.TwoSpeedGearshift;
-import org.team3128.common.hardware.motor.NarwhalSRX;
 import org.team3128.common.util.Assert;
 import org.team3128.common.util.Constants;
 import org.team3128.common.util.Log;
@@ -13,6 +12,7 @@ import org.team3128.common.util.units.Length;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.command.Command;
 
@@ -35,7 +35,7 @@ import edu.wpi.first.wpilibj.command.Command;
  */
 public class SRXTankDrive implements ITankDrive
 {
-	private NarwhalSRX leftMotors, rightMotors;
+	private TalonSRX leftMotors, rightMotors;
 
 	private TwoSpeedGearshift gearshift;
 
@@ -117,7 +117,7 @@ public class SRXTankDrive implements ITankDrive
 	 * @param track distance across between left and right wheels
 	 * @param robotFreeSpeed the measured maximum speed in native units per 100ms of the robot when it is driving
 	 */
-	public SRXTankDrive(NarwhalSRX leftMotors, NarwhalSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, int robotFreeSpeed)
+	public SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, int robotFreeSpeed)
 	{
 		this.leftMotors = leftMotors;
 		this.rightMotors = rightMotors;
@@ -160,9 +160,6 @@ public class SRXTankDrive implements ITankDrive
 
 			leftMotors.setNeutralMode(NeutralMode.Brake);
 			rightMotors.setNeutralMode(NeutralMode.Brake);
-			
-			leftMotors.configureTeleop();
-			rightMotors.configureTeleop();
 
 			configuredForTeleop = true;
 		}
@@ -177,9 +174,6 @@ public class SRXTankDrive implements ITankDrive
 
 		leftMotors.setNeutralMode(NeutralMode.Brake);
 		rightMotors.setNeutralMode(NeutralMode.Brake);
-		
-		leftMotors.configureAutonomous();
-		rightMotors.configureAutonomous();
 
 		configuredForTeleop = false;
 	}
@@ -730,11 +724,9 @@ public class SRXTankDrive implements ITankDrive
 
 	public class CmdFeedForwardFineTune extends CmdMoveDistance
 	{
-
 		public CmdFeedForwardFineTune(double power, boolean useScalars, double timeout)
 		{
 			super(MoveEndMode.BOTH, 100 * Length.in, 100 * Length.in, power, false, timeout);
-			// TODO Auto-generated constructor stub
 		}
 
 	}
