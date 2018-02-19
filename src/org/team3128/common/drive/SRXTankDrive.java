@@ -115,7 +115,7 @@ public class SRXTankDrive implements ITankDrive
 	 * @param gearRatio The gear ratio of the turns of the wheels per turn of the encoder shaft
 	 * @param wheelBase The distance between the front and back wheel on a side
 	 * @param track distance across between left and right wheels
-	 * @param robotFreeSpeed the measured maximum speed in native units per 100ms of the robot when it is driving
+	 * @param robotFreeSpeed the measured maximum speed in native units per 100ms of the robot when it is driving in low gear
 	 */
 	public SRXTankDrive(TalonSRX leftMotors, TalonSRX rightMotors, double wheelCircumfrence, double gearRatio, double wheelBase, double track, int robotFreeSpeed)
 	{
@@ -138,14 +138,7 @@ public class SRXTankDrive implements ITankDrive
 		{
 			throw new IllegalArgumentException("Invalid gear ratio");
 		}
-
-		// act like battery voltage is always 11V if it is higher
-		this.leftMotors.configNominalOutputForward(1.5/12.0, Constants.CAN_TIMEOUT);
-		this.leftMotors.configNominalOutputReverse(1.5/12.0, Constants.CAN_TIMEOUT);
 		
-		this.rightMotors.configNominalOutputForward(1.5/12.0, Constants.CAN_TIMEOUT);
-		this.rightMotors.configNominalOutputReverse(1.5/12.0, Constants.CAN_TIMEOUT);
-		 
 		setReversed(false);
 	}
 
@@ -371,10 +364,10 @@ public class SRXTankDrive implements ITankDrive
 			double rightSpeed = rightSpeedNative / AngularSpeed.NATIVE_UNITS_PER_100MS;
 			double leftSpeed = leftSpeedNative / AngularSpeed.NATIVE_UNITS_PER_100MS;
 			
-			if ((rightSpeed < 0 && leftSpeed > 0) || (rightSpeed > 0 && leftSpeed < 0)) {
-				gearshift.shiftToHigh();
+			if (gearshift.isInHighGear() && (rightSpeed < 0 && leftSpeed > 0) || (rightSpeed > 0 && leftSpeed < 0)) {
+				gearshift.shiftToLow();
 			}
-			else if (!gearshift.isInHighGear() && (rightSpeed > shiftUpSpeed || leftSpeed > shiftUpSpeed)) {
+			else if (!gearshift.isInHighGear() && (rightSpeed > shiftUpSpeed && leftSpeed > shiftUpSpeed)) {
 				gearshift.shiftToHigh();
 			}
 			else if (gearshift.isInHighGear() && (rightSpeed < shiftDownSpeed && leftSpeed < shiftDownSpeed)) {
@@ -642,6 +635,50 @@ public class SRXTankDrive implements ITankDrive
 			else
 			{
 				rightDist = wheelAngularDist;
+			}
+		}
+	}
+	
+	/**
+	 * Command to turn in an arc with a certain raidus for the specified amount of degrees.
+	 * 
+	 * Runs the opposite motors from the direction provided, so turning LEFT would set the RIGHT motors.
+	 * 
+	 * NOTE: currently requires that the front or back wheels be omni wheels for accurate turning.
+	 */
+	public class CmdFancyArcTurn extends CmdMoveDistance {
+
+		/**
+		 * @param degs how far to turn in degrees.  Accepts negative values.
+		 * @param msec How long the move should take. If set to 0, do not time the move.
+		 */
+		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir)
+		{
+			this(radius, degs, msec, dir, .5);
+		}
+
+		//it seems like the math is consistently off by about 6%
+		final static double FUDGE_FACTOR = 1.06;
+
+		/**
+		 * @param degs how far to turn in degrees.  Accepts negative values.
+		 * @param msec How long the move should take. If set to 0, do not time the move.
+		 */
+		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir, double power)
+		{
+			super(MoveEndMode.BOTH, 0, 0, power, false, msec);
+
+			//this formula is explained on the info repository wiki
+			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * track)) * FUDGE_FACTOR;
+			double outerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius + 0.5 * track)) * FUDGE_FACTOR;
+			
+			if (dir == Direction.RIGHT) {
+				rightDist = innerAngularDist;
+				leftDist = outerAngularDist;
+			}
+			else {
+				rightDist = outerAngularDist;
+				leftDist = innerAngularDist;
 			}
 		}
 	}
