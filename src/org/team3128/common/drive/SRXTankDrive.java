@@ -490,6 +490,8 @@ public class SRXTankDrive implements ITankDrive
 		// when the wheels' angular distance get within this threshold of the
 		// correct value, that side is considered done
 		final static double MOVEMENT_ERROR_THRESHOLD = 70 * Angle.DEGREES;
+		// okay so it's kind of huge, but for Power Up, we needed no precision and lots of speed
+		
 
 		protected double power;
 
@@ -503,6 +505,7 @@ public class SRXTankDrive implements ITankDrive
 		boolean rightDone;
 
 		boolean useScalars;
+		boolean smooth;
 		
 		/**
 		 * @param leftDist
@@ -520,6 +523,33 @@ public class SRXTankDrive implements ITankDrive
 			this.power = power;
 			this.leftDist = leftDist;
 			this.rightDist = rightDist;
+			
+			this.smooth = false;
+			
+			this.endMode = endMode;
+			this.useScalars = useScalars;
+		}
+		
+		/**
+		 * @param leftDist
+		 *            Degrees to spin the left wheel
+		 * @param rightDist
+		 *            Degrees to spin the right wheel
+		 * @param power
+		 *            motor power to move at, from 0 to 1
+		 * @param smooth wether or not to attempt to segue this move smoothly into the next           
+		 */
+		public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, boolean smooth, double power, boolean useScalars,
+				double timeout)
+		{
+			super(timeout / 1000.0);
+
+			this.power = power;
+			this.leftDist = leftDist;
+			this.rightDist = rightDist;
+			
+			this.smooth = smooth;
+			
 			this.endMode = endMode;
 			this.useScalars = useScalars;
 		}
@@ -566,6 +596,10 @@ public class SRXTankDrive implements ITankDrive
 			{
 				rightMode = ControlMode.Position;
 			}
+			
+			double smooth_multiplier = (smooth) ? 1.06 : 1.00;
+			leftDist *= smooth_multiplier;
+			rightDist *= smooth_multiplier;
 
 			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
 			leftMotors.configMotionAcceleration((int) (leftSpeed / 2.0), Constants.CAN_TIMEOUT);
@@ -634,7 +668,13 @@ public class SRXTankDrive implements ITankDrive
 				correctDistanceCount = 0;
 			}
 
-			return correctDistanceCount > 25;
+			if (smooth) {
+				return correctDistanceCount > 3;
+			}
+			else {
+				return correctDistanceCount > 25;
+			}
+			
 		}
 
 		// Called once after isFinished returns true
@@ -642,7 +682,7 @@ public class SRXTankDrive implements ITankDrive
 		{
 			Log.info("CmdMoveDistance", "Ending");
 
-			// Now encapsulated ininitialize() because of CTRE Pheonix (v5)
+			// Now encapsulated in ininitialize() because of CTRE Pheonix (v5)
 
 			// if(leftDist == 0)
 			// {
@@ -723,18 +763,19 @@ public class SRXTankDrive implements ITankDrive
 	}
 
 	/**
-	 * Command to turn in an arc with a certain raidus for the specified amount
+	 * Command to turn in an arc with a certain radius for the specified amount
 	 * of degrees.
 	 * 
-	 * Runs the opposite motors from the direction provided, so turning LEFT
-	 * would set the RIGHT motors.
+	 * Unlike standard arc turn, it doesn't actually require omni wheels because
+	 * the slippage is even less than an in place turn, so it's actually more accurate.
 	 * 
-	 * NOTE: currently requires that the front or back wheels be omni wheels for
-	 * accurate turning.
+	 * Try to use this as frequently as you can, unless another method is quicker.
 	 */
 	public class CmdFancyArcTurn extends CmdMoveDistance
 	{
-
+		// it seems like the math is consistently off by about 6%
+		final static double FUDGE_FACTOR = 1.06;
+				
 		/**
 		 * @param degs
 		 *            how far to turn in degrees. Accepts negative values.
@@ -744,12 +785,9 @@ public class SRXTankDrive implements ITankDrive
 		 */
 		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir)
 		{
-			this(radius, degs, msec, dir, .5);
+			this(radius, degs, msec, dir, .5, false);
 		}
-
-		// it seems like the math is consistently off by about 6%
-		final static double FUDGE_FACTOR = 1.06;
-
+		
 		/**
 		 * @param degs
 		 *            how far to turn in degrees. Accepts negative values.
@@ -759,7 +797,19 @@ public class SRXTankDrive implements ITankDrive
 		 */
 		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir, double power)
 		{
-			super(MoveEndMode.BOTH, 0, 0, power, false, msec);
+			this(radius, degs, msec, dir, power, false);
+		}
+		
+		/**
+		 * @param degs
+		 *            how far to turn in degrees. Accepts negative values.
+		 * @param msec
+		 *            How long the move should take. If set to 0, do not time
+		 *            the move.
+		 */
+		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir, double power, boolean smooth)
+		{
+			super(MoveEndMode.BOTH, 0, 0, smooth, power, false, msec);
 
 			// this formula is explained on the info repository wiki
 			double innerAngularDist = cmToEncDegrees((degs * Math.PI / 180.0) * (radius - 0.5 * track)) * FUDGE_FACTOR;
@@ -846,6 +896,7 @@ public class SRXTankDrive implements ITankDrive
 			super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), fullSpeed ? 1 : .50, true, msec);
 		}
 
+		
 		/**
 		 * @param d
 		 *            how far to move. Accepts negative values.
@@ -856,6 +907,19 @@ public class SRXTankDrive implements ITankDrive
 		public CmdMoveForward(double d, int msec, double power)
 		{
 			super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), power, true, msec);
+
+		}
+		
+		/**
+		 * @param d
+		 *            how far to move. Accepts negative values.
+		 * @param msec
+		 *            How long the move should take. If set to 0, do not time
+		 *            the move
+		 */
+		public CmdMoveForward(double d, int msec, boolean smooth, double power)
+		{
+			super(MoveEndMode.BOTH, cmToEncDegrees(d), cmToEncDegrees(d), smooth, power, true, msec);
 
 		}
 

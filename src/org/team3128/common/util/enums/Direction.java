@@ -9,4 +9,8 @@ public enum Direction
 {
 	RIGHT,
 	LEFT;
+	
+	public Direction opposite() {
+		return (this == Direction.RIGHT) ? Direction.LEFT : Direction.RIGHT;
+	}
 }
