@@ -182,7 +182,7 @@ public abstract class NarwhalRobot extends RobotBase
 				// either a different mode or from power-on
 				if (!disabledInitialized) {
 					LiveWindow.setEnabled(false);
-					
+										
 					if(autonomousInitialized)
 					{
 						Log.info("NarwhalRobot", "Re-constructing autonomous sequences");
@@ -204,6 +204,7 @@ public abstract class NarwhalRobot extends RobotBase
 				}
 				if (nextPeriodReady()) {
 					HAL.observeUserProgramDisabled();
+										
 					disabledPeriodic();
 				}
 			} else if (isTest()) {

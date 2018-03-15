@@ -7,10 +7,20 @@ package org.team3128.common.util.enums;
  */
 public enum Direction
 {
-	RIGHT,
-	LEFT;
+	RIGHT("Right"),
+	LEFT("Left");
+	
+	private String name;
+	
+	private Direction(String name) {
+		this.name = name;
+	}
 	
 	public Direction opposite() {
 		return (this == Direction.RIGHT) ? Direction.LEFT : Direction.RIGHT;
+	}
+	
+	public String toString() {
+		return name;
 	}
 }

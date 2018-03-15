@@ -3,19 +3,17 @@ package org.team3128.common.autonomous.primitives;
 import edu.wpi.first.wpilibj.command.Command;
 
 public class CmdDelay extends Command
-{
-	long startTime;
+{	
+	double sec;
 	
-	long millisToWait;
-	
-    public CmdDelay(long millis)
+    public CmdDelay(double sec)
     {
-    	millisToWait = millis;
+    	super(sec);
+    	this.sec = sec;
     }
 
     protected void initialize()
     {
-    	startTime = System.currentTimeMillis();
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -29,7 +27,7 @@ public class CmdDelay extends Command
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished()
     {    	
-    	return System.currentTimeMillis() > startTime + millisToWait;
+    	return isTimedOut();
     }
 
     // Called once after isFinished returns true

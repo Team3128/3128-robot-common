@@ -180,8 +180,8 @@ public class SRXTankDrive implements ITankDrive
 		// leftMotors.changeControlMode(TalonSRX.TalonControlMode.MotionMagic);
 		// rightMotors.changeControlMode(TalonSRX.TalonControlMode.MotionMagic);
 
-		leftMotors.setNeutralMode(NeutralMode.Brake);
-		rightMotors.setNeutralMode(NeutralMode.Brake);
+		leftMotors.setNeutralMode(NeutralMode.Coast);
+		rightMotors.setNeutralMode(NeutralMode.Coast);
 
 		configuredForTeleop = false;
 	}
@@ -557,8 +557,9 @@ public class SRXTankDrive implements ITankDrive
 		protected void initialize()
 		{
 			Log.info("CmdMoveDistance", "Initializing");
-			configureForAuto();
+			
 			clearEncoders();
+			configureForAuto();
 
 			double leftSpeed = (robotMaxSpeed * power * ((useScalars) ? leftSpeedScalar : 1.0));
 			double rightSpeed = (robotMaxSpeed * power * ((useScalars) ? rightSpeedScalar : 1.0));
@@ -597,23 +598,21 @@ public class SRXTankDrive implements ITankDrive
 				rightMode = ControlMode.Position;
 			}
 			
-			double smooth_multiplier = (smooth) ? 1.06 : 1.00;
-			leftDist *= smooth_multiplier;
-			rightDist *= smooth_multiplier;
+			double smooth_multiplier = (smooth) ? 1.05 : 1.00;
 
 			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
 			leftMotors.configMotionAcceleration((int) (leftSpeed / 2.0), Constants.CAN_TIMEOUT);
 
-			leftMotors.set(leftMode, leftDist / Angle.CTRE_MAGENC_NU);
+			leftMotors.set(leftMode, smooth_multiplier * leftDist / Angle.CTRE_MAGENC_NU);
 
 			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
 			rightMotors.configMotionAcceleration((int) (rightSpeed / 2.0), Constants.CAN_TIMEOUT);
 
-			rightMotors.set(rightMode, rightDist / Angle.CTRE_MAGENC_NU);
+			rightMotors.set(rightMode, smooth_multiplier * rightDist / Angle.CTRE_MAGENC_NU);
 
 			Log.debug("CmdMoveDistance",
-					"Distances -\nL: " + leftDist / Angle.CTRE_MAGENC_NU + " rot; R: "
-							+ rightDist / Angle.CTRE_MAGENC_NU + " rot\nSpeeds-\nL: " + leftSpeed + " RPM, R: "
+					"Smooth Multiplier: " + smooth_multiplier + " Distances -L: " + leftDist / Angle.CTRE_MAGENC_NU + " rot; R: "
+							+ rightDist / Angle.CTRE_MAGENC_NU + " rot\nSpeeds-L: " + leftSpeed + " RPM, R: "
 							+ rightSpeed + " RPM");
 
 			try
@@ -648,17 +647,22 @@ public class SRXTankDrive implements ITankDrive
 
 			boolean isInZone;
 
-			switch (endMode)
-			{
-			case BOTH:
-				isInZone = leftDone && rightDone;
-				break;
-			case EITHER:
-			default:
-				isInZone = leftDone || rightDone;
-				break;
+			if (smooth) {
+				isInZone = leftError >= 0 && rightError >= 0;
 			}
-
+			else {
+				switch (endMode)
+				{
+				case BOTH:
+					isInZone = leftDone && rightDone;
+					break;
+				case EITHER:
+				default:
+					isInZone = leftDone || rightDone;
+					break;
+				}
+			}
+			
 			if (isInZone)
 			{
 				++correctDistanceCount;
@@ -669,7 +673,7 @@ public class SRXTankDrive implements ITankDrive
 			}
 
 			if (smooth) {
-				return correctDistanceCount > 3;
+				return correctDistanceCount > 1;
 			}
 			else {
 				return correctDistanceCount > 25;
@@ -693,7 +697,7 @@ public class SRXTankDrive implements ITankDrive
 			// rightMotors.changeControlMode(TalonControlMode.MotionMagic);
 			// }
 
-			stopMovement();
+			stopMovement();			
 		}
 
 		// Called when another command which requires one or more of the same
