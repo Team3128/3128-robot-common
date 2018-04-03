@@ -347,6 +347,7 @@ public abstract class NarwhalRobot extends RobotBase
 		}
 		else
 		{
+			Log.info("NarwhalRobot", "Running auto sequence \"" + autoProgram.getName() + "\"");
 			autoProgram.start();
 		}
 	}
