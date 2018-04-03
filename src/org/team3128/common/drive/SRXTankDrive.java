@@ -508,17 +508,16 @@ public class SRXTankDrive implements ITankDrive
 		boolean smooth;
 		
 		/**
-		 * @param leftDist
-		 *            Degrees to spin the left wheel
-		 * @param rightDist
-		 *            Degrees to spin the right wheel
-		 * @param power
-		 *            motor power to move at, from 0 to 1
+		 * @param leftDist - Degrees to spin the left wheel
+		 * @param rightDist - Degrees to spin the right wheel
+		 * @param power - fractional power to move drive wheels at from 0 to 1
+		 * @param useScalars - Whether or not to scale output left and right powers
+		 * @param timeoutMs - The maximum time (in milliseconds) to run the command for
 		 */
 		public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, double power, boolean useScalars,
-				double timeout)
+				double timeoutMs)
 		{
-			super(timeout / 1000.0);
+			super(timeoutMs / 1000.0);
 
 			this.power = power;
 			this.leftDist = leftDist;
@@ -531,13 +530,12 @@ public class SRXTankDrive implements ITankDrive
 		}
 		
 		/**
-		 * @param leftDist
-		 *            Degrees to spin the left wheel
-		 * @param rightDist
-		 *            Degrees to spin the right wheel
-		 * @param power
-		 *            motor power to move at, from 0 to 1
-		 * @param smooth wether or not to attempt to segue this move smoothly into the next           
+		 * @param leftDist - Degrees to spin the left wheel
+		 * @param rightDist - Degrees to spin the right wheel
+		 * @param smooth - Should the move terminate at speed = 0 (false) or continue to drift (true)
+		 * @param power - fractional power to move drive wheels at from 0 to 1
+		 * @param useScalars - Whether or not to scale output left and right powers
+		 * @param timeoutMs - The maximum time (in milliseconds) to run the command for
 		 */
 		public CmdMoveDistance(MoveEndMode endMode, double leftDist, double rightDist, boolean smooth, double power, boolean useScalars,
 				double timeout)
@@ -727,11 +725,8 @@ public class SRXTankDrive implements ITankDrive
 	{
 
 		/**
-		 * @param degs
-		 *            how far to turn in degrees. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move.
+		 * @param degs - the distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
 		 */
 		public CmdArcTurn(float degs, int msec, Direction dir)
 		{
@@ -742,11 +737,9 @@ public class SRXTankDrive implements ITankDrive
 		final static double FUDGE_FACTOR = 1.06;
 
 		/**
-		 * @param degs
-		 *            how far to turn in degrees. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move.
+		 * @param degs - the distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param power - The relative speed to drive the turn at (from 0 to 1)
 		 */
 		public CmdArcTurn(float degs, int msec, Direction dir, double power)
 		{
@@ -781,11 +774,9 @@ public class SRXTankDrive implements ITankDrive
 		final static double FUDGE_FACTOR = 1.06;
 				
 		/**
-		 * @param degs
-		 *            how far to turn in degrees. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move.
+		 * @param radius - The radius that the robot should drive the arc at.
+		 * @param degs - The distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
 		 */
 		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir)
 		{
@@ -793,11 +784,10 @@ public class SRXTankDrive implements ITankDrive
 		}
 		
 		/**
-		 * @param degs
-		 *            how far to turn in degrees. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move.
+		 * @param radius - The radius that the robot should drive the arc at.
+		 * @param degs - The distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param power - The relative speed to drive the turn at (from 0 to 1)
 		 */
 		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir, double power)
 		{
@@ -805,11 +795,11 @@ public class SRXTankDrive implements ITankDrive
 		}
 		
 		/**
-		 * @param degs
-		 *            how far to turn in degrees. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move.
+		 * @param radius - The radius that the robot should drive the arc at.
+		 * @param degs - The distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param power - The relative speed to drive the turn at (from 0 to 1)
+		 * @param smooth - Should the move terminate at speed = 0 (false) or continue to drift (true)
 		 */
 		public CmdFancyArcTurn(double radius, float degs, int msec, Direction dir, double power, boolean smooth)
 		{
@@ -841,11 +831,8 @@ public class SRXTankDrive implements ITankDrive
 	public class CmdInPlaceTurn extends CmdMoveDistance
 	{
 		/**
-		 * @param degs
-		 *            how far to turn in degrees. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move
+		 * @param degs - The distance to turn in degrees. Accepts negative values.
+		 * @param msec - The maximum time to run the move (in milliseconds)
 		 */
 		public CmdInPlaceTurn(float degs, int msec, Direction dir)
 		{
@@ -853,17 +840,15 @@ public class SRXTankDrive implements ITankDrive
 		}
 
 		/**
-		 * @param degs
-		 *            how far to turn in degrees. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move
+		 * @param degs - The distance to turn in degrees. Accepts negative values.
+		 * @param power - The relative speed to drive the turn at (from 0 to 1)
+		 * @param msec - The maximum time to run the move (in milliseconds)
 		 */
-		public CmdInPlaceTurn(float degs, double motorPower, int msec, Direction dir)
+		public CmdInPlaceTurn(float degs, double power, int msec, Direction dir)
 		{
 			// the encoder counts are an in-depth calculation, so we don't set
 			// them until after the super constructor
-			super(MoveEndMode.BOTH, 0, 0, motorPower, false, msec);
+			super(MoveEndMode.BOTH, 0, 0, power, false, msec);
 
 			// this formula is explained in the info repository wiki
 			double wheelAngularDist = cmToEncDegrees(turningCircleCircumference * (degs / 360.0));
@@ -887,13 +872,10 @@ public class SRXTankDrive implements ITankDrive
 	 */
 	public class CmdMoveForward extends CmdMoveDistance
 	{
-
 		/**
-		 * @param d
-		 *            how far to move. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move
+		 * @param d - The distance to drive forward (in centimeters)
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param fullSpeed - Should the robot drive at maximum power
 		 */
 		public CmdMoveForward(double d, int msec, boolean fullSpeed)
 		{
@@ -902,11 +884,9 @@ public class SRXTankDrive implements ITankDrive
 
 		
 		/**
-		 * @param d
-		 *            how far to move. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move
+		 * @param d - The distance to drive forward (in centimeters)
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param power - fractional power to move drive wheels at from 0 to 1
 		 */
 		public CmdMoveForward(double d, int msec, double power)
 		{
@@ -915,11 +895,10 @@ public class SRXTankDrive implements ITankDrive
 		}
 		
 		/**
-		 * @param d
-		 *            how far to move. Accepts negative values.
-		 * @param msec
-		 *            How long the move should take. If set to 0, do not time
-		 *            the move
+		 * @param d - The distance to drive forward (in centimeters)
+		 * @param msec - The maximum time to run the move (in milliseconds)
+		 * @param smooth - Should the move terminate at speed = 0 (false) or continue to drift (true)
+		 * @param power - fractional power to move drive wheels at from 0 to 1
 		 */
 		public CmdMoveForward(double d, int msec, boolean smooth, double power)
 		{
