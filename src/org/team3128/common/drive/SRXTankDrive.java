@@ -646,7 +646,19 @@ public class SRXTankDrive implements ITankDrive
 			boolean isInZone;
 
 			if (smooth) {
-				isInZone = leftError >= 0 && rightError >= 0;
+				if (leftDist < 0) {
+					isInZone = leftError <= 0;
+				}
+				else {
+					isInZone = leftError >= 0;
+				}
+				
+				if (rightDist < 0) {
+					isInZone = isInZone && rightError <= 0;
+				}
+				else {
+					isInZone = isInZone && rightError >= 0;
+				}
 			}
 			else {
 				switch (endMode)
