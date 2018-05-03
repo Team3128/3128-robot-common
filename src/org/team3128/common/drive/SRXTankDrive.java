@@ -599,12 +599,12 @@ public class SRXTankDrive implements ITankDrive
 			double smooth_multiplier = (smooth) ? 1.05 : 1.00;
 
 			leftMotors.configMotionCruiseVelocity((int) leftSpeed, Constants.CAN_TIMEOUT);
-			leftMotors.configMotionAcceleration((int) (leftSpeed / 2.0), Constants.CAN_TIMEOUT);
+			leftMotors.configMotionAcceleration((int) (leftSpeed), Constants.CAN_TIMEOUT);
 
 			leftMotors.set(leftMode, smooth_multiplier * leftDist / Angle.CTRE_MAGENC_NU);
 
 			rightMotors.configMotionCruiseVelocity((int) rightSpeed, Constants.CAN_TIMEOUT);
-			rightMotors.configMotionAcceleration((int) (rightSpeed / 2.0), Constants.CAN_TIMEOUT);
+			rightMotors.configMotionAcceleration((int) (rightSpeed), Constants.CAN_TIMEOUT);
 
 			rightMotors.set(rightMode, smooth_multiplier * rightDist / Angle.CTRE_MAGENC_NU);
 
