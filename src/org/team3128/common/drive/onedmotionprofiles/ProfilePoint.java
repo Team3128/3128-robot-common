@@ -1,4 +1,4 @@
-package org.team3128.common.drive.motionprofiles;
+package org.team3128.common.drive.onedmotionprofiles;
 
 /**
  * Custom wrapper to hold motion profile points, of which the important components are the duration, position, and velocity.

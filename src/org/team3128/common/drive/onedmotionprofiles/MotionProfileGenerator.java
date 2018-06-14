@@ -1,4 +1,4 @@
-package org.team3128.common.drive.motionprofiles;
+package org.team3128.common.drive.onedmotionprofiles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,15 +16,15 @@ import java.util.List;
  */
 public class MotionProfileGenerator {
 	public static void main(String[] args) {
-		MotionProfileGenerator g = new MotionProfileGenerator(10, 10, 0.600);
+		MotionProfileGenerator g = new MotionProfileGenerator(10, 10, 0.600, 30);
 		
-		g.generateProfile(new Segment(100, 1.0), new Segment(40, 0.5), new Segment(20, 0), new Segment(40, 1.0), new Segment(100, 0.5));
+		g.generateProfile(new MotorSegment(100, 1.0), new MotorSegment(40, 0.5), new MotorSegment(20, 0), new MotorSegment(40, 1.0), new MotorSegment(100, 0.5));
 	}
 	
 	/**
 	 * The itp value of the motion profile, the duration of each profile point, in seconds.
 	 */
-	private final double pointDuration = 0.010;
+	private double pointDuration;
 	
 	private double cruiseVelocity, maxAcceleration;
 	private double rampTime;
@@ -38,11 +38,13 @@ public class MotionProfileGenerator {
 	 * @param maxAcceleration - The maximum acceleration of the profile (in native units/sec^2)
 	 * @param rampTime - The amount of time for the drive to accelerate from zero to max acceleration (in seconds)
 	 */
-	public MotionProfileGenerator(double cruiseVelocity, double maxAcceleration, double rampTime) {
+	public MotionProfileGenerator(double cruiseVelocity, double maxAcceleration, double rampTime, int pointDurationMs) {
 		this.cruiseVelocity = cruiseVelocity;
 		this.maxAcceleration = maxAcceleration;
 		
 		this.rampTime = rampTime;
+		
+		this.pointDuration = pointDurationMs / 1000.0;
 		
 		triangularThreshold = maxAcceleration * rampTime;
 	}
@@ -75,13 +77,24 @@ public class MotionProfileGenerator {
 	 * 
 	 * @param segments - The array of Segment objects that define successive moves.
 	 */
-	public List<ProfilePoint> generateProfile(Segment... segments) {
-		List<ProfilePoint> points = new ArrayList<ProfilePoint>();
+	public List<ArrayList<ProfilePoint>> generateProfile(List<MotorSegment> segments) {
+		MotorSegment[] array = (MotorSegment[]) segments.toArray();
+		
+		return generateProfile(array);
+	}
+	
+	/**
+	 * Generates a sequence of ProfilePoints based on a sequence of Segments. Uses a trapezoidal acceleration curve at each interface to create a smooth motion.
+	 * 
+	 * @param segments - The array of Segment objects that define successive moves.
+	 */
+	public List<ArrayList<ProfilePoint>> generateProfile(MotorSegment... segments) {
+		List<ArrayList<ProfilePoint>> pointsList = new ArrayList<ArrayList<ProfilePoint>>();
 		List<AccelerationPoint> accelPoints = new ArrayList<AccelerationPoint>();
 		
 		for (int i = 0; i < segments.length - 1; i++) {
-			Segment first = segments[i];
-			Segment second = segments[i+1];
+			MotorSegment first = segments[i];
+			MotorSegment second = segments[i+1];
 			
 			accelPoints.add(new AccelerationPoint(cruiseVelocity * (second.getSpeedFraction() - first.getSpeedFraction()), this));
 		}
@@ -96,10 +109,11 @@ public class MotionProfileGenerator {
 		gVelocity = 0;
 		gAcceleration = 0;
 		
-		
 		for (int i = 0; i < segments.length; i++) {
+			ArrayList<ProfilePoint> points = new ArrayList<ProfilePoint>();
+			
 			AccelerationPoint front = accelPoints.get(i);
-			Segment seg = segments[i];
+			MotorSegment seg = segments[i];
 			AccelerationPoint back = accelPoints.get(i+1);
 			
 			double cruiseDistance = seg.getDistance() - front.getAcceleratedDistance() / 2 - back.getAcceleratedDistance() / 2;
@@ -190,9 +204,17 @@ public class MotionProfileGenerator {
 					accelerationTick(points, back);
 				}
 			}
+			
+			pointsList.add(points);
 		}
 		
-		return points;
+		for (ArrayList<ProfilePoint> points : pointsList) {
+			for (ProfilePoint point : points) {
+				System.out.println(point);
+			}
+		}
+		
+		return pointsList;
 	}
 	
 	/**

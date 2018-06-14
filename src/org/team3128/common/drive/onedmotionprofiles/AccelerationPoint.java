@@ -1,4 +1,4 @@
-package org.team3128.common.drive.motionprofiles;
+package org.team3128.common.drive.onedmotionprofiles;
 
 /**
  * The transition between successive Segment objects, in which the motion profile accelerates trapezoidal between the two (potentially different) cruise velocities.
